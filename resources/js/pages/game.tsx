@@ -4,6 +4,11 @@ import { useEffect, useRef, useState } from 'react';
 import MultiplayerGameCanvas from '@/components/multiplayer-game-canvas';
 import { type SharedData } from '@/types';
 
+// Ensure touchControls exists
+if (typeof window !== 'undefined') {
+    window.touchControls = window.touchControls || { left: false, right: false, jump: false };
+}
+
 interface Room {
     id: number;
     code: string;
@@ -27,6 +32,11 @@ export default function Game({ room, isHost }: Props) {
     const [players, setPlayers] = useState<Player[]>([]);
     const [isConnected, setIsConnected] = useState(false);
     const channelRef = useRef<ReturnType<typeof window.Echo.join> | null>(null);
+    
+    // Touch control state
+    const [leftPressed, setLeftPressed] = useState(false);
+    const [rightPressed, setRightPressed] = useState(false);
+    const [jumpPressed, setJumpPressed] = useState(false);
 
     useEffect(() => {
         // Join the presence channel for this game room
@@ -51,6 +61,32 @@ export default function Game({ room, isHost }: Props) {
             }
         };
     }, [room.id]);
+
+    // Touch control handlers
+    const handleLeftDown = () => {
+        setLeftPressed(true);
+        if (window.touchControls) window.touchControls.left = true;
+    };
+    const handleLeftUp = () => {
+        setLeftPressed(false);
+        if (window.touchControls) window.touchControls.left = false;
+    };
+    const handleRightDown = () => {
+        setRightPressed(true);
+        if (window.touchControls) window.touchControls.right = true;
+    };
+    const handleRightUp = () => {
+        setRightPressed(false);
+        if (window.touchControls) window.touchControls.right = false;
+    };
+    const handleJumpDown = () => {
+        setJumpPressed(true);
+        if (window.touchControls) window.touchControls.jump = true;
+    };
+    const handleJumpUp = () => {
+        setJumpPressed(false);
+        if (window.touchControls) window.touchControls.jump = false;
+    };
 
     return (
         <>
@@ -116,7 +152,7 @@ export default function Game({ room, isHost }: Props) {
 
                 {/* Game container */}
                 <div
-                    className="relative flex flex-1 items-center justify-center overflow-hidden border-4 border-yellow-400 bg-gray-900"
+                    className="relative flex flex-1 items-center justify-center border-4 border-yellow-400 bg-gray-900"
                     style={{
                         boxShadow: '6px 6px 0 #7c3aed, 12px 12px 0 rgba(0,0,0,0.3)',
                     }}
@@ -153,10 +189,50 @@ export default function Game({ room, isHost }: Props) {
                         <kbd className="border border-gray-600 bg-gray-800 px-1 text-white">←→</kbd> or{' '}
                         <kbd className="border border-gray-600 bg-gray-800 px-1 text-white">AD</kbd> Move
                     </span>
+                    <span>
+                        <kbd className="border border-gray-600 bg-gray-800 px-1 text-white">SPACE</kbd> Jump
+                    </span>
                     {isHost && (
                         <span className="text-purple-400">You are the host</span>
                     )}
                 </div>
+            </div>
+
+            {/* Touch controls - all together at bottom */}
+            <div className="fixed bottom-6 left-1/2 z-[9999] flex -translate-x-1/2 gap-3">
+                <button
+                    className={`flex h-14 w-14 touch-none items-center justify-center border-4 border-yellow-600 text-3xl select-none ${
+                        leftPressed ? 'bg-yellow-400 text-gray-900' : 'bg-yellow-500 text-gray-900'
+                    }`}
+                    onPointerDown={handleLeftDown}
+                    onPointerUp={handleLeftUp}
+                    onPointerCancel={handleLeftUp}
+                    onContextMenu={(e) => e.preventDefault()}
+                >
+                    ◀
+                </button>
+                <button
+                    className={`flex h-14 w-14 touch-none items-center justify-center rounded-full border-4 border-green-600 text-xl font-bold select-none ${
+                        jumpPressed ? 'bg-green-400 text-gray-900' : 'bg-green-500 text-gray-900'
+                    }`}
+                    onPointerDown={handleJumpDown}
+                    onPointerUp={handleJumpUp}
+                    onPointerCancel={handleJumpUp}
+                    onContextMenu={(e) => e.preventDefault()}
+                >
+                    ▲
+                </button>
+                <button
+                    className={`flex h-14 w-14 touch-none items-center justify-center border-4 border-yellow-600 text-3xl select-none ${
+                        rightPressed ? 'bg-yellow-400 text-gray-900' : 'bg-yellow-500 text-gray-900'
+                    }`}
+                    onPointerDown={handleRightDown}
+                    onPointerUp={handleRightUp}
+                    onPointerCancel={handleRightUp}
+                    onContextMenu={(e) => e.preventDefault()}
+                >
+                    ▶
+                </button>
             </div>
 
             <style>{`

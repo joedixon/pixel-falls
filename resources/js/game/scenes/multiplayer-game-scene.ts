@@ -49,6 +49,7 @@ export class MultiplayerGameScene extends Phaser.Scene {
         A: Phaser.Input.Keyboard.Key;
         S: Phaser.Input.Keyboard.Key;
         D: Phaser.Input.Keyboard.Key;
+        SPACE: Phaser.Input.Keyboard.Key;
     };
     private ground!: Phaser.Physics.Arcade.StaticGroup;
     private remotePlayers: Map<string, RemotePlayer> = new Map();
@@ -266,6 +267,7 @@ export class MultiplayerGameScene extends Phaser.Scene {
                 A: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A),
                 S: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S),
                 D: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D),
+                SPACE: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE),
             };
         }
 
@@ -355,6 +357,7 @@ export class MultiplayerGameScene extends Phaser.Scene {
         // Handle local player movement (keyboard + touch)
         const leftPressed = this.cursors?.left.isDown || this.wasd?.A.isDown || window.touchControls?.left;
         const rightPressed = this.cursors?.right.isDown || this.wasd?.D.isDown || window.touchControls?.right;
+        const jumpPressed = this.cursors?.up.isDown || this.wasd?.SPACE.isDown || this.wasd?.W.isDown || window.touchControls?.jump;
 
         let animation = 'idle';
 
@@ -377,6 +380,11 @@ export class MultiplayerGameScene extends Phaser.Scene {
             if (this.player.body.touching.down) {
                 this.player.anims.play('idle_0', true);
             }
+        }
+
+        // Handle jump
+        if (jumpPressed && this.player.body.touching.down) {
+            this.player.setVelocityY(-300);
         }
 
         // Update name label position
