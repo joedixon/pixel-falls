@@ -204,7 +204,7 @@ export default function Game({ room, isHost, playerCostume }: Props) {
             {/* D-pad on left side */}
             <div className="fixed bottom-8 left-6 z-[9999] flex gap-3 md:bottom-12 md:left-10 md:gap-4">
                 <button
-                    className={`flex h-20 w-20 touch-none items-center justify-center rounded-2xl border-4 border-yellow-600 text-4xl shadow-lg select-none active:scale-95 md:h-28 md:w-28 md:text-5xl ${
+                    className={`flex h-20 w-20 touch-none items-center justify-center rounded-2xl border-4 border-yellow-600 shadow-lg select-none active:scale-95 md:h-28 md:w-28 ${
                         leftPressed ? 'bg-yellow-400 text-gray-900' : 'bg-yellow-500/90 text-gray-900'
                     }`}
                     onPointerDown={handleLeftDown}
@@ -212,10 +212,12 @@ export default function Game({ room, isHost, playerCostume }: Props) {
                     onPointerCancel={handleLeftUp}
                     onContextMenu={(e) => e.preventDefault()}
                 >
-                    ◀
+                    <span className="flex h-full w-full items-center justify-center text-4xl leading-none md:text-5xl">
+                        ◀
+                    </span>
                 </button>
                 <button
-                    className={`flex h-20 w-20 touch-none items-center justify-center rounded-2xl border-4 border-yellow-600 text-4xl shadow-lg select-none active:scale-95 md:h-28 md:w-28 md:text-5xl ${
+                    className={`flex h-20 w-20 touch-none items-center justify-center rounded-2xl border-4 border-yellow-600 shadow-lg select-none active:scale-95 md:h-28 md:w-28 ${
                         rightPressed ? 'bg-yellow-400 text-gray-900' : 'bg-yellow-500/90 text-gray-900'
                     }`}
                     onPointerDown={handleRightDown}
@@ -223,14 +225,16 @@ export default function Game({ room, isHost, playerCostume }: Props) {
                     onPointerCancel={handleRightUp}
                     onContextMenu={(e) => e.preventDefault()}
                 >
-                    ▶
+                    <span className="flex h-full w-full items-center justify-center text-4xl leading-none md:text-5xl">
+                        ▶
+                    </span>
                 </button>
             </div>
             
             {/* Jump button on right side - bigger for easy thumb access */}
             <div className="fixed bottom-8 right-6 z-[9999] md:bottom-12 md:right-10">
                 <button
-                    className={`flex h-24 w-24 touch-none items-center justify-center rounded-full border-4 border-green-600 text-5xl shadow-lg select-none active:scale-95 md:h-32 md:w-32 md:text-6xl ${
+                    className={`flex h-24 w-24 touch-none items-center justify-center rounded-full border-4 border-green-600 shadow-lg select-none active:scale-95 md:h-32 md:w-32 ${
                         jumpPressed ? 'bg-green-400 text-gray-900' : 'bg-green-500/90 text-gray-900'
                     }`}
                     onPointerDown={handleJumpDown}
@@ -238,7 +242,9 @@ export default function Game({ room, isHost, playerCostume }: Props) {
                     onPointerCancel={handleJumpUp}
                     onContextMenu={(e) => e.preventDefault()}
                 >
-                    ▲
+                    <span className="flex h-full w-full items-center justify-center text-5xl leading-none md:text-6xl" style={{ marginTop: '-2px' }}>
+                        ▲
+                    </span>
                 </button>
             </div>
 
