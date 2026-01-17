@@ -15,10 +15,6 @@ Route::get('/', function () {
 Route::get('/play', PlayController::class)->name('play');
 
 Route::middleware(['auth'])->group(function () {
-    Route::get('dashboard', function () {
-        return Inertia::render('dashboard');
-    })->name('dashboard');
-
     // Game lobby and rooms
     Route::get('/lobby', [GameRoomController::class, 'index'])->name('lobby');
     Route::post('/lobby', [GameRoomController::class, 'store'])->name('lobby.store');
