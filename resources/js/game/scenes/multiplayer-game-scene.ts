@@ -111,6 +111,7 @@ export class MultiplayerGameScene extends Phaser.Scene {
     private ground!: Phaser.Physics.Arcade.StaticGroup;
     private lava!: Phaser.Physics.Arcade.StaticGroup;
     private finishLine!: Phaser.Physics.Arcade.Sprite;
+    private finishLineX = WORLD_WIDTH - 40;
     private hasFinished = false;
     private spawnX = 64;
     private spawnY = WORLD_HEIGHT - 40;
@@ -1194,14 +1195,11 @@ export class MultiplayerGameScene extends Phaser.Scene {
 
     private createFinishLine(): void {
         // Place finish line near the end of the level
-        const finishX = WORLD_WIDTH - 40;
         const finishY = WORLD_HEIGHT - 16 - 24; // Position above ground (48px sprite, anchored at center)
 
-        this.finishLine = this.physics.add.sprite(finishX, finishY, 'finishLine');
+        this.finishLine = this.physics.add.sprite(this.finishLineX, finishY, 'finishLine');
         this.finishLine.setImmovable(true);
         this.finishLine.body.setAllowGravity(false);
-
-        // Set up overlap detection with player (will be called after player is created)
     }
 
     private handleFinishLine(): void {
@@ -1516,6 +1514,11 @@ export class MultiplayerGameScene extends Phaser.Scene {
         // Handle jump
         if (jumpPressed && this.player.body.touching.down) {
             this.player.setVelocityY(-300);
+        }
+
+        // Check if player passed the finish line (even if they jumped over it)
+        if (!this.hasFinished && this.player.x >= this.finishLineX) {
+            this.handleFinishLine();
         }
 
         // Update name label position
