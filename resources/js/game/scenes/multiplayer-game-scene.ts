@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 
-import { GAME_HEIGHT, GAME_WIDTH } from '../config';
+import { WORLD_WIDTH, WORLD_HEIGHT } from '../config';
 
 // Costume palettes (must match costumes.ts)
 // type: 'ears' = animal with ears, 'frog' = big eyes on top, 'bird' = no ears, 'bunny' = tall ears, 'bean' = jellybean
@@ -997,21 +997,143 @@ export class MultiplayerGameScene extends Phaser.Scene {
 
         this.textures.addImage('ground', canvas);
     }
+    
+    private createPlatformTile(): void {
+        const size = 16;
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d')!;
+
+        // Stone/brick platform
+        ctx.fillStyle = '#6b7280'; // Gray
+        ctx.fillRect(0, 0, size, size);
+        
+        // Top highlight
+        ctx.fillStyle = '#9ca3af';
+        ctx.fillRect(0, 0, size, 2);
+        
+        // Brick lines
+        ctx.fillStyle = '#4b5563';
+        ctx.fillRect(0, 4, size, 1);
+        ctx.fillRect(0, 10, size, 1);
+        ctx.fillRect(8, 0, 1, 4);
+        ctx.fillRect(4, 5, 1, 5);
+        ctx.fillRect(12, 5, 1, 5);
+        ctx.fillRect(8, 11, 1, 5);
+
+        this.textures.addImage('platform', canvas);
+    }
+    
+    private createBackground(): void {
+        // Draw pixel art mountains in the background
+        const bgWidth = WORLD_WIDTH;
+        const bgHeight = WORLD_HEIGHT;
+        
+        // Far mountains (slowest scroll)
+        const farMountains = this.add.graphics();
+        farMountains.fillStyle(0x2d3748); // Dark blue-gray
+        // Mountain 1
+        farMountains.fillTriangle(0, bgHeight - 16, 80, 40, 160, bgHeight - 16);
+        // Mountain 2
+        farMountains.fillTriangle(120, bgHeight - 16, 200, 30, 280, bgHeight - 16);
+        // Mountain 3
+        farMountains.fillTriangle(240, bgHeight - 16, 350, 45, 460, bgHeight - 16);
+        // Mountain 4
+        farMountains.fillTriangle(400, bgHeight - 16, 520, 35, 640, bgHeight - 16);
+        // Mountain 5
+        farMountains.fillTriangle(580, bgHeight - 16, 700, 50, 820, bgHeight - 16);
+        // Mountain 6
+        farMountains.fillTriangle(760, bgHeight - 16, 880, 40, 1000, bgHeight - 16);
+        farMountains.setScrollFactor(0.2, 1); // Slow parallax
+        
+        // Near hills (medium scroll)
+        const nearHills = this.add.graphics();
+        nearHills.fillStyle(0x4a5568); // Lighter gray
+        // Hill 1
+        nearHills.fillTriangle(-20, bgHeight - 16, 60, 80, 140, bgHeight - 16);
+        // Hill 2
+        nearHills.fillTriangle(100, bgHeight - 16, 180, 70, 260, bgHeight - 16);
+        // Hill 3
+        nearHills.fillTriangle(220, bgHeight - 16, 320, 85, 420, bgHeight - 16);
+        // Hill 4
+        nearHills.fillTriangle(380, bgHeight - 16, 480, 75, 580, bgHeight - 16);
+        // Hill 5
+        nearHills.fillTriangle(540, bgHeight - 16, 650, 80, 760, bgHeight - 16);
+        // Hill 6
+        nearHills.fillTriangle(700, bgHeight - 16, 820, 70, 940, bgHeight - 16);
+        // Hill 7
+        nearHills.fillTriangle(880, bgHeight - 16, 960, 85, 1040, bgHeight - 16);
+        nearHills.setScrollFactor(0.5, 1); // Medium parallax
+        
+        // Add some stars/clouds in the sky
+        const skyDecor = this.add.graphics();
+        skyDecor.fillStyle(0x6366f1, 0.3); // Faint purple
+        // Scattered dots for stars
+        for (let i = 0; i < 30; i++) {
+            const x = Math.random() * bgWidth;
+            const y = Math.random() * 60 + 10;
+            skyDecor.fillRect(x, y, 2, 2);
+        }
+        skyDecor.setScrollFactor(0.1, 1); // Very slow parallax
+    }
+    
+    private createPlatforms(): void {
+        // Create platform texture
+        this.createPlatformTile();
+        
+        // Define platform positions: [x, y, width in tiles]
+        const platformData = [
+            // Section 1 - Stepping stones
+            [120, 140, 3],
+            [200, 120, 2],
+            [280, 100, 3],
+            
+            // Section 2 - Staircase up
+            [380, 140, 2],
+            [420, 120, 2],
+            [460, 100, 2],
+            
+            // Section 3 - High platforms
+            [540, 80, 4],
+            [620, 100, 2],
+            [680, 120, 3],
+            
+            // Section 4 - Final stretch
+            [780, 100, 3],
+            [860, 80, 4],
+        ];
+        
+        for (const [x, y, widthTiles] of platformData) {
+            for (let i = 0; i < widthTiles; i++) {
+                this.ground.create(x + i * 16, y, 'platform');
+            }
+        }
+    }
 
     create(): void {
-        // Create ground
+        // Set up larger world bounds for scrolling
+        this.physics.world.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
+        
+        // Create parallax background layers
+        this.createBackground();
+        
+        // Create ground spanning the full world width
         this.ground = this.physics.add.staticGroup();
         const tileSize = 16;
-        const groundY = GAME_HEIGHT - tileSize / 2;
+        const groundY = WORLD_HEIGHT - tileSize / 2;
 
-        for (let x = tileSize / 2; x < GAME_WIDTH; x += tileSize) {
+        for (let x = tileSize / 2; x < WORLD_WIDTH; x += tileSize) {
             this.ground.create(x, groundY, 'ground');
         }
+        
+        // Add floating platforms throughout the level
+        this.createPlatforms();
 
-        // Create local player with selected costume
+        // Create local player with selected costume (spawn near start)
         this.player = this.physics.add.sprite(
-            GAME_WIDTH / 2,
-            GAME_HEIGHT - 40,
+            64, // Start near left side
+            WORLD_HEIGHT - 40,
             `player_${this.playerCostume}`,
         );
         // Feet at sprite y=11. Body height 11 + offset 1 = body spans y=1 to y=12
@@ -1066,6 +1188,11 @@ export class MultiplayerGameScene extends Phaser.Scene {
         }
 
         this.player.anims.play(`idle_${this.playerCostume}`);
+        
+        // Set up camera to follow player smoothly
+        this.cameras.main.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
+        this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
+        this.cameras.main.setDeadzone(50, 30); // Small deadzone for smoother feel
 
         // Listen for other players' movements
         this.setupWebSocketListeners();

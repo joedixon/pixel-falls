@@ -1,9 +1,13 @@
 import Phaser from 'phaser';
 import { GameScene } from './scenes/game-scene';
 
-// Game dimensions - 320x180 is a nice 16:9 pixel art resolution
+// Game dimensions - 320x180 is a nice 16:9 pixel art resolution (viewport)
 export const GAME_WIDTH = 320;
 export const GAME_HEIGHT = 180;
+
+// World dimensions - larger than viewport for scrolling
+export const WORLD_WIDTH = 960; // 3x wider than viewport
+export const WORLD_HEIGHT = 180; // Keep same height for horizontal scrolling
 
 export const gameConfig: Phaser.Types.Core.GameConfig = {
     type: Phaser.AUTO,
