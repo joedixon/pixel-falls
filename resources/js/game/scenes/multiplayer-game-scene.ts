@@ -109,8 +109,11 @@ export class MultiplayerGameScene extends Phaser.Scene {
         SPACE: Phaser.Input.Keyboard.Key;
     };
     private ground!: Phaser.Physics.Arcade.StaticGroup;
+    private lava!: Phaser.Physics.Arcade.StaticGroup;
     private finishLine!: Phaser.Physics.Arcade.Sprite;
     private hasFinished = false;
+    private spawnX = 64;
+    private spawnY = WORLD_HEIGHT - 40;
     private victoryText?: Phaser.GameObjects.Text;
     private remotePlayers: Map<string, RemotePlayer> = new Map();
     private lastSentPosition = { x: 0, y: 0 };
@@ -134,6 +137,7 @@ export class MultiplayerGameScene extends Phaser.Scene {
             this.createAnimalSprites(i);
         }
         this.createGroundTile();
+        this.createLavaSprite();
         this.createFinishLineSprite();
     }
 
@@ -1002,6 +1006,40 @@ export class MultiplayerGameScene extends Phaser.Scene {
         this.textures.addImage('ground', canvas);
     }
 
+    private createLavaSprite(): void {
+        const size = 16;
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d')!;
+
+        // Lava base - orange/red gradient
+        ctx.fillStyle = '#dc2626'; // Red
+        ctx.fillRect(0, 0, size, size);
+
+        // Add orange highlights for molten effect
+        ctx.fillStyle = '#f97316'; // Orange
+        ctx.fillRect(2, 2, 4, 3);
+        ctx.fillRect(10, 4, 4, 3);
+        ctx.fillRect(5, 8, 5, 3);
+        ctx.fillRect(12, 10, 3, 2);
+
+        // Add bright yellow hot spots
+        ctx.fillStyle = '#fbbf24'; // Yellow
+        ctx.fillRect(3, 3, 2, 1);
+        ctx.fillRect(11, 5, 2, 1);
+        ctx.fillRect(6, 9, 2, 1);
+
+        // Top surface - brighter wavy line
+        ctx.fillStyle = '#fb923c';
+        for (let x = 0; x < size; x += 4) {
+            ctx.fillRect(x, 0, 2, 2);
+            ctx.fillRect(x + 2, 1, 2, 2);
+        }
+
+        this.textures.addImage('lava', canvas);
+    }
+
     private createFinishLineSprite(): void {
         const width = 16;
         const height = 48; // Taller flag pole
@@ -1206,6 +1244,24 @@ export class MultiplayerGameScene extends Phaser.Scene {
         this.createConfetti();
     }
 
+    private handleLavaDeath(): void {
+        // Flash screen red
+        this.cameras.main.flash(300, 255, 50, 50);
+        
+        // Reset player to spawn point
+        this.player.setPosition(this.spawnX, this.spawnY);
+        this.player.setVelocity(0, 0);
+        
+        // Brief invulnerability visual feedback
+        this.tweens.add({
+            targets: this.player,
+            alpha: 0.5,
+            duration: 100,
+            yoyo: true,
+            repeat: 3,
+        });
+    }
+
     private createConfetti(): void {
         const colors = [0xfbbf24, 0xef4444, 0x22c55e, 0x3b82f6, 0xec4899];
         
@@ -1238,13 +1294,32 @@ export class MultiplayerGameScene extends Phaser.Scene {
         // Create parallax background layers
         this.createBackground();
         
-        // Create ground spanning the full world width
+        // Create ground and lava
         this.ground = this.physics.add.staticGroup();
+        this.lava = this.physics.add.staticGroup();
         const tileSize = 16;
         const groundY = WORLD_HEIGHT - tileSize / 2;
 
+        // Define lava pit ranges [startX, endX] - player must use platforms to cross
+        const lavaPits = [
+            [160, 320],   // After first safe section, before section 1 platforms
+            [400, 520],   // Section 2 area - staircase challenge
+            [600, 720],   // Section 3 area - high platform challenge
+            [820, 900],   // Final challenge before finish
+        ];
+
+        // Helper to check if position is in a lava pit
+        const isLavaPit = (x: number) => {
+            return lavaPits.some(([start, end]) => x >= start && x <= end);
+        };
+
+        // Create ground or lava based on position
         for (let x = tileSize / 2; x < WORLD_WIDTH; x += tileSize) {
-            this.ground.create(x, groundY, 'ground');
+            if (isLavaPit(x)) {
+                this.lava.create(x, groundY, 'lava');
+            } else {
+                this.ground.create(x, groundY, 'ground');
+            }
         }
         
         // Add floating platforms throughout the level
@@ -1255,8 +1330,8 @@ export class MultiplayerGameScene extends Phaser.Scene {
 
         // Create local player with selected costume (spawn near start)
         this.player = this.physics.add.sprite(
-            64, // Start near left side
-            WORLD_HEIGHT - 40,
+            this.spawnX,
+            this.spawnY,
             `player_${this.playerCostume}`,
         );
         // Feet at sprite y=11. Body height 11 + offset 1 = body spans y=1 to y=12
@@ -1270,6 +1345,11 @@ export class MultiplayerGameScene extends Phaser.Scene {
         // Add overlap detection with finish line
         this.physics.add.overlap(this.player, this.finishLine, () => {
             this.handleFinishLine();
+        });
+
+        // Add overlap detection with lava - reset to start
+        this.physics.add.overlap(this.player, this.lava, () => {
+            this.handleLavaDeath();
         });
 
         // Add name label above player
