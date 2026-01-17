@@ -200,11 +200,12 @@ export default function Game({ room, isHost, playerCostume }: Props) {
                 </div>
             </div>
 
-            {/* Touch controls - all together at bottom */}
-            <div className="fixed bottom-6 left-1/2 z-[9999] flex -translate-x-1/2 gap-3">
+            {/* Touch controls - ergonomic layout for tablet/phone */}
+            {/* D-pad on left side */}
+            <div className="fixed bottom-8 left-6 z-[9999] flex gap-2 md:bottom-12 md:left-10 md:gap-3">
                 <button
-                    className={`flex h-14 w-14 touch-none items-center justify-center border-4 border-yellow-600 text-3xl select-none ${
-                        leftPressed ? 'bg-yellow-400 text-gray-900' : 'bg-yellow-500 text-gray-900'
+                    className={`flex h-16 w-16 touch-none items-center justify-center rounded-xl border-4 border-yellow-600 text-3xl shadow-lg select-none active:scale-95 md:h-20 md:w-20 md:text-4xl ${
+                        leftPressed ? 'bg-yellow-400 text-gray-900' : 'bg-yellow-500/90 text-gray-900'
                     }`}
                     onPointerDown={handleLeftDown}
                     onPointerUp={handleLeftUp}
@@ -214,19 +215,8 @@ export default function Game({ room, isHost, playerCostume }: Props) {
                     ◀
                 </button>
                 <button
-                    className={`flex h-14 w-14 touch-none items-center justify-center rounded-full border-4 border-green-600 text-xl font-bold select-none ${
-                        jumpPressed ? 'bg-green-400 text-gray-900' : 'bg-green-500 text-gray-900'
-                    }`}
-                    onPointerDown={handleJumpDown}
-                    onPointerUp={handleJumpUp}
-                    onPointerCancel={handleJumpUp}
-                    onContextMenu={(e) => e.preventDefault()}
-                >
-                    ▲
-                </button>
-                <button
-                    className={`flex h-14 w-14 touch-none items-center justify-center border-4 border-yellow-600 text-3xl select-none ${
-                        rightPressed ? 'bg-yellow-400 text-gray-900' : 'bg-yellow-500 text-gray-900'
+                    className={`flex h-16 w-16 touch-none items-center justify-center rounded-xl border-4 border-yellow-600 text-3xl shadow-lg select-none active:scale-95 md:h-20 md:w-20 md:text-4xl ${
+                        rightPressed ? 'bg-yellow-400 text-gray-900' : 'bg-yellow-500/90 text-gray-900'
                     }`}
                     onPointerDown={handleRightDown}
                     onPointerUp={handleRightUp}
@@ -234,6 +224,21 @@ export default function Game({ room, isHost, playerCostume }: Props) {
                     onContextMenu={(e) => e.preventDefault()}
                 >
                     ▶
+                </button>
+            </div>
+            
+            {/* Jump button on right side - bigger for easy thumb access */}
+            <div className="fixed bottom-8 right-6 z-[9999] md:bottom-12 md:right-10">
+                <button
+                    className={`flex h-20 w-20 touch-none items-center justify-center rounded-full border-4 border-green-600 text-4xl shadow-lg select-none active:scale-95 md:h-24 md:w-24 md:text-5xl ${
+                        jumpPressed ? 'bg-green-400 text-gray-900' : 'bg-green-500/90 text-gray-900'
+                    }`}
+                    onPointerDown={handleJumpDown}
+                    onPointerUp={handleJumpUp}
+                    onPointerCancel={handleJumpUp}
+                    onContextMenu={(e) => e.preventDefault()}
+                >
+                    ▲
                 </button>
             </div>
 
