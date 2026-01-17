@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 
-import { WORLD_WIDTH, WORLD_HEIGHT } from '../config';
+import { GAME_WIDTH, GAME_HEIGHT, WORLD_WIDTH, WORLD_HEIGHT } from '../config';
 
 // Costume palettes (must match costumes.ts)
 // type: 'ears' = animal with ears, 'frog' = big eyes on top, 'bird' = no ears, 'bunny' = tall ears, 'bean' = jellybean
@@ -109,6 +109,9 @@ export class MultiplayerGameScene extends Phaser.Scene {
         SPACE: Phaser.Input.Keyboard.Key;
     };
     private ground!: Phaser.Physics.Arcade.StaticGroup;
+    private finishLine!: Phaser.Physics.Arcade.Sprite;
+    private hasFinished = false;
+    private victoryText?: Phaser.GameObjects.Text;
     private remotePlayers: Map<string, RemotePlayer> = new Map();
     private lastSentPosition = { x: 0, y: 0 };
     private sendInterval = 50; // Send position every 50ms
@@ -131,6 +134,7 @@ export class MultiplayerGameScene extends Phaser.Scene {
             this.createAnimalSprites(i);
         }
         this.createGroundTile();
+        this.createFinishLineSprite();
     }
 
     private createAnimalSprites(costumeIndex: number): void {
@@ -997,6 +1001,45 @@ export class MultiplayerGameScene extends Phaser.Scene {
 
         this.textures.addImage('ground', canvas);
     }
+
+    private createFinishLineSprite(): void {
+        const width = 16;
+        const height = 48; // Taller flag pole
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d')!;
+
+        // Pole
+        ctx.fillStyle = '#6b7280';
+        ctx.fillRect(1, 0, 3, height);
+
+        // Checkered flag (8x12 pixels at top)
+        const flagX = 4;
+        const flagY = 2;
+        const flagWidth = 12;
+        const flagHeight = 10;
+        const squareSize = 2;
+
+        for (let y = 0; y < flagHeight; y += squareSize) {
+            for (let x = 0; x < flagWidth; x += squareSize) {
+                const isWhite = ((x / squareSize) + (y / squareSize)) % 2 === 0;
+                ctx.fillStyle = isWhite ? '#fafafa' : '#1f2937';
+                ctx.fillRect(flagX + x, flagY + y, squareSize, squareSize);
+            }
+        }
+
+        // Flag border
+        ctx.strokeStyle = '#f59e0b';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(flagX, flagY, flagWidth, flagHeight);
+
+        // Gold ball on top
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(0, 0, 5, 3);
+
+        this.textures.addImage('finishLine', canvas);
+    }
     
     private createPlatformTile(): void {
         const size = 16;
@@ -1111,6 +1154,83 @@ export class MultiplayerGameScene extends Phaser.Scene {
         }
     }
 
+    private createFinishLine(): void {
+        // Place finish line near the end of the level
+        const finishX = WORLD_WIDTH - 40;
+        const finishY = WORLD_HEIGHT - 16 - 24; // Position above ground (48px sprite, anchored at center)
+
+        this.finishLine = this.physics.add.sprite(finishX, finishY, 'finishLine');
+        this.finishLine.setImmovable(true);
+        this.finishLine.body.setAllowGravity(false);
+
+        // Set up overlap detection with player (will be called after player is created)
+    }
+
+    private handleFinishLine(): void {
+        if (this.hasFinished) return;
+
+        this.hasFinished = true;
+
+        // Celebration effect - flash the screen
+        this.cameras.main.flash(500, 255, 215, 0); // Gold flash
+
+        // Show victory text - position relative to viewport (scrollFactor 0)
+        this.victoryText = this.add.text(
+            GAME_WIDTH / 2,
+            GAME_HEIGHT / 2 - 20,
+            'FINISH!',
+            {
+                fontSize: '24px',
+                color: '#fbbf24',
+                backgroundColor: '#1f2937',
+                padding: { x: 12, y: 6 },
+                fontStyle: 'bold',
+            },
+        );
+        this.victoryText.setOrigin(0.5);
+        this.victoryText.setScrollFactor(0); // Fixed to camera
+        this.victoryText.setDepth(100);
+
+        // Add a pulsing scale animation
+        this.tweens.add({
+            targets: this.victoryText,
+            scaleX: 1.1,
+            scaleY: 1.1,
+            duration: 300,
+            ease: 'Sine.easeInOut',
+            yoyo: true,
+            repeat: -1,
+        });
+
+        // Create confetti particles
+        this.createConfetti();
+    }
+
+    private createConfetti(): void {
+        const colors = [0xfbbf24, 0xef4444, 0x22c55e, 0x3b82f6, 0xec4899];
+        
+        for (let i = 0; i < 30; i++) {
+            const startX = Math.random() * GAME_WIDTH;
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            
+            // Position relative to viewport (scrollFactor 0)
+            const confetti = this.add.rectangle(startX, -10, 4, 4, color);
+            confetti.setScrollFactor(0);
+            confetti.setDepth(99);
+            
+            this.tweens.add({
+                targets: confetti,
+                y: GAME_HEIGHT + 10,
+                x: startX + (Math.random() - 0.5) * 100,
+                rotation: Math.random() * 10,
+                duration: 2000 + Math.random() * 1000,
+                ease: 'Cubic.easeIn',
+                delay: Math.random() * 500,
+                onComplete: () => confetti.destroy(),
+            });
+        }
+    }
+
     create(): void {
         // Set up larger world bounds for scrolling
         this.physics.world.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
@@ -1130,6 +1250,9 @@ export class MultiplayerGameScene extends Phaser.Scene {
         // Add floating platforms throughout the level
         this.createPlatforms();
 
+        // Create finish line at the end of the level
+        this.createFinishLine();
+
         // Create local player with selected costume (spawn near start)
         this.player = this.physics.add.sprite(
             64, // Start near left side
@@ -1143,6 +1266,11 @@ export class MultiplayerGameScene extends Phaser.Scene {
         this.player.setCollideWorldBounds(true);
         this.player.setBounce(0.1);
         this.physics.add.collider(this.player, this.ground);
+
+        // Add overlap detection with finish line
+        this.physics.add.overlap(this.player, this.finishLine, () => {
+            this.handleFinishLine();
+        });
 
         // Add name label above player
         this.playerNameText = this.add.text(
