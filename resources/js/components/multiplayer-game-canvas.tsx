@@ -19,6 +19,7 @@ interface MultiplayerGameCanvasProps {
     roomId: number;
     playerId: number;
     playerName: string;
+    playerCostume: number;
     className?: string;
 }
 
@@ -26,6 +27,7 @@ export default function MultiplayerGameCanvas({
     roomId,
     playerId,
     playerName,
+    playerCostume,
     className = '',
 }: MultiplayerGameCanvasProps) {
     const gameRef = useRef<Phaser.Game | null>(null);
@@ -49,7 +51,7 @@ export default function MultiplayerGameCanvas({
         const initialScale = calculateScale();
 
         // Create the multiplayer scene with room info
-        const scene = new MultiplayerGameScene(roomId, playerId, playerName);
+        const scene = new MultiplayerGameScene(roomId, playerId, playerName, playerCostume);
 
         const config: Phaser.Types.Core.GameConfig = {
             type: Phaser.AUTO,
@@ -98,7 +100,7 @@ export default function MultiplayerGameCanvas({
                 gameRef.current = null;
             }
         };
-    }, [roomId, playerId, playerName]);
+    }, [roomId, playerId, playerName, playerCostume]);
 
     return (
         <div

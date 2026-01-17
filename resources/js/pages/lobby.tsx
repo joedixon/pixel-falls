@@ -1,9 +1,11 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEvent, useState } from 'react';
 
+import CharacterPreview from '@/components/character-preview';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { COSTUMES } from '@/game/costumes';
 
 interface Room {
     id: number;
@@ -18,11 +20,14 @@ interface Room {
 
 interface Props {
     rooms: Room[];
+    currentCostume: number;
 }
 
-export default function Lobby({ rooms }: Props) {
+export default function Lobby({ rooms, currentCostume }: Props) {
     const [showCreate, setShowCreate] = useState(false);
     const [showJoin, setShowJoin] = useState(false);
+    const [selectedCostume, setSelectedCostume] = useState(currentCostume);
+    const [savingCostume, setSavingCostume] = useState(false);
 
     const createForm = useForm({
         name: '',
@@ -31,6 +36,31 @@ export default function Lobby({ rooms }: Props) {
     const joinForm = useForm({
         code: '',
     });
+
+    const handleCostumeChange = async (costumeId: number) => {
+        setSelectedCostume(costumeId);
+        setSavingCostume(true);
+        
+        try {
+            const response = await fetch('/lobby/costume', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || '',
+                },
+                body: JSON.stringify({ costume: costumeId }),
+            });
+            
+            if (!response.ok) {
+                console.error('Failed to save costume');
+            }
+        } catch (error) {
+            console.error('Error saving costume:', error);
+        } finally {
+            setSavingCostume(false);
+        }
+    };
 
     const handleCreate = (e: FormEvent) => {
         e.preventDefault();
@@ -95,6 +125,47 @@ export default function Lobby({ rooms }: Props) {
 
                 {/* Main content */}
                 <div className="relative z-10 w-full max-w-2xl space-y-6">
+                    {/* Character customization */}
+                    <div
+                        className="border-4 border-purple-400 bg-gray-900/90 p-6"
+                        style={{ boxShadow: '6px 6px 0 #581c87' }}
+                    >
+                        <h2 className="mb-4 text-xl text-purple-400">YOUR CHARACTER</h2>
+                        <div className="flex items-center gap-6">
+                            {/* Large preview */}
+                            <div className="flex flex-col items-center">
+                                <div className="border-4 border-purple-500 bg-gray-800 p-4">
+                                    <CharacterPreview costumeId={selectedCostume} size={96} />
+                                </div>
+                                <span className="mt-2 text-sm text-purple-300">
+                                    {COSTUMES[selectedCostume]?.name || 'Unknown'}
+                                </span>
+                            </div>
+                            
+                            {/* Costume grid */}
+                            <div className="flex-1">
+                                <p className="mb-2 text-sm text-gray-400">Choose your outfit:</p>
+                                <div className="grid grid-cols-4 gap-2">
+                                    {COSTUMES.map((costume) => (
+                                        <button
+                                            key={costume.id}
+                                            onClick={() => handleCostumeChange(costume.id)}
+                                            disabled={savingCostume}
+                                            className={`flex flex-col items-center border-2 p-2 transition-all ${
+                                                selectedCostume === costume.id
+                                                    ? 'border-yellow-400 bg-yellow-400/20'
+                                                    : 'border-gray-600 bg-gray-800 hover:border-gray-400'
+                                            }`}
+                                        >
+                                            <CharacterPreview costumeId={costume.id} size={40} />
+                                            <span className="mt-1 text-xs text-gray-300">{costume.name}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     {/* Action buttons */}
                     <div className="flex justify-center gap-4">
                         <button

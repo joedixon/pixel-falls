@@ -20,6 +20,7 @@ interface Room {
 interface Props {
     room: Room;
     isHost: boolean;
+    playerCostume: number;
 }
 
 interface Player {
@@ -27,7 +28,7 @@ interface Player {
     name: string;
 }
 
-export default function Game({ room, isHost }: Props) {
+export default function Game({ room, isHost, playerCostume }: Props) {
     const { auth } = usePage<SharedData>().props;
     const [players, setPlayers] = useState<Player[]>([]);
     const [isConnected, setIsConnected] = useState(false);
@@ -178,6 +179,7 @@ export default function Game({ room, isHost }: Props) {
                             roomId={room.id}
                             playerId={auth.user!.id}
                             playerName={auth.user!.name}
+                            playerCostume={playerCostume}
                             className="h-full w-full"
                         />
                     )}

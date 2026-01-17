@@ -22,7 +22,19 @@ class GameRoomController extends Controller
 
         return Inertia::render('lobby', [
             'rooms' => $rooms,
+            'currentCostume' => auth()->user()->costume ?? 0,
         ]);
+    }
+
+    public function updateCostume(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'costume' => ['required', 'integer', 'min:0', 'max:15'],
+        ]);
+
+        $request->user()->update(['costume' => $validated['costume']]);
+
+        return response()->json(['status' => 'ok', 'costume' => $validated['costume']]);
     }
 
     public function store(Request $request): RedirectResponse
@@ -50,6 +62,7 @@ class GameRoomController extends Controller
         return Inertia::render('game', [
             'room' => $room->only(['id', 'code', 'name', 'status', 'max_players']),
             'isHost' => $room->host_id === auth()->id(),
+            'playerCostume' => auth()->user()->costume ?? 0,
         ]);
     }
 

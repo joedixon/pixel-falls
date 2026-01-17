@@ -43,6 +43,7 @@ class PlayerMoved implements ShouldBroadcastNow
         return [
             'playerId' => $this->user->id,
             'playerName' => $this->user->name,
+            'costume' => $this->user->costume ?? 0,
             'x' => $this->x,
             'y' => $this->y,
             'velocityX' => $this->velocityX,

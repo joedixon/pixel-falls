@@ -23,6 +23,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/lobby', [GameRoomController::class, 'index'])->name('lobby');
     Route::post('/lobby', [GameRoomController::class, 'store'])->name('lobby.store');
     Route::post('/lobby/join', [GameRoomController::class, 'join'])->name('lobby.join');
+    Route::post('/lobby/costume', [GameRoomController::class, 'updateCostume'])->name('lobby.costume');
     Route::get('/game/{code}', [GameRoomController::class, 'show'])->name('game.show');
     Route::post('/game/{room}/move', [GameRoomController::class, 'move'])->name('game.move');
 });
