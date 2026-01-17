@@ -1,8 +1,20 @@
 import Phaser from 'phaser';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { GAME_HEIGHT, GAME_WIDTH } from '@/game/config';
 import { MultiplayerGameScene } from '@/game/scenes/multiplayer-game-scene';
+
+// Global touch state that the Phaser scene can read
+declare global {
+    interface Window {
+        touchControls: {
+            left: boolean;
+            right: boolean;
+        };
+    }
+}
+
+window.touchControls = { left: false, right: false };
 
 interface MultiplayerGameCanvasProps {
     roomId: number;
@@ -89,12 +101,63 @@ export default function MultiplayerGameCanvas({
         };
     }, [roomId, playerId, playerName]);
 
+    const [leftPressed, setLeftPressed] = useState(false);
+    const [rightPressed, setRightPressed] = useState(false);
+
+    const handleLeftDown = () => {
+        setLeftPressed(true);
+        window.touchControls.left = true;
+    };
+
+    const handleLeftUp = () => {
+        setLeftPressed(false);
+        window.touchControls.left = false;
+    };
+
+    const handleRightDown = () => {
+        setRightPressed(true);
+        window.touchControls.right = true;
+    };
+
+    const handleRightUp = () => {
+        setRightPressed(false);
+        window.touchControls.right = false;
+    };
+
     return (
-        <div
-            ref={containerRef}
-            id="game-container"
-            className={`flex items-center justify-center ${className}`}
-            style={{ imageRendering: 'pixelated' }}
-        />
+        <div className={`relative ${className}`}>
+            <div
+                ref={containerRef}
+                id="game-container"
+                className="flex h-full w-full items-center justify-center"
+                style={{ imageRendering: 'pixelated' }}
+            />
+            
+            {/* Touch controls - always visible, positioned at bottom left */}
+            <div className="absolute bottom-4 left-4 z-50 flex gap-2">
+                <button
+                    className={`flex h-14 w-14 items-center justify-center border-2 border-yellow-500 text-3xl transition-colors select-none ${
+                        leftPressed ? 'bg-yellow-400 text-gray-900' : 'bg-yellow-400/70 text-gray-800'
+                    }`}
+                    onPointerDown={handleLeftDown}
+                    onPointerUp={handleLeftUp}
+                    onPointerLeave={handleLeftUp}
+                    onContextMenu={(e) => e.preventDefault()}
+                >
+                    ◀
+                </button>
+                <button
+                    className={`flex h-14 w-14 items-center justify-center border-2 border-yellow-500 text-3xl transition-colors select-none ${
+                        rightPressed ? 'bg-yellow-400 text-gray-900' : 'bg-yellow-400/70 text-gray-800'
+                    }`}
+                    onPointerDown={handleRightDown}
+                    onPointerUp={handleRightUp}
+                    onPointerLeave={handleRightUp}
+                    onContextMenu={(e) => e.preventDefault()}
+                >
+                    ▶
+                </button>
+            </div>
+        </div>
     );
 }

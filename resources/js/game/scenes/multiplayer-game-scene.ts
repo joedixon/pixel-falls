@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+
 import { GAME_HEIGHT, GAME_WIDTH } from '../config';
 
 // Player color palettes for different players
@@ -279,6 +280,7 @@ export class MultiplayerGameScene extends Phaser.Scene {
         });
     }
 
+
     private setupWebSocketListeners(): void {
         const channel = window.Echo.join(`game.${this.roomId}`);
 
@@ -350,9 +352,9 @@ export class MultiplayerGameScene extends Phaser.Scene {
     update(time: number): void {
         const speed = 100;
 
-        // Handle local player movement
-        const leftPressed = this.cursors?.left.isDown || this.wasd?.A.isDown;
-        const rightPressed = this.cursors?.right.isDown || this.wasd?.D.isDown;
+        // Handle local player movement (keyboard + touch)
+        const leftPressed = this.cursors?.left.isDown || this.wasd?.A.isDown || window.touchControls?.left;
+        const rightPressed = this.cursors?.right.isDown || this.wasd?.D.isDown || window.touchControls?.right;
 
         let animation = 'idle';
 
