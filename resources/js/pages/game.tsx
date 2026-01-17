@@ -202,9 +202,9 @@ export default function Game({ room, isHost, playerCostume }: Props) {
 
             {/* Touch controls - ergonomic layout for tablet/phone */}
             {/* D-pad on left side */}
-            <div className="fixed bottom-8 left-6 z-[9999] flex gap-2 md:bottom-12 md:left-10 md:gap-3">
+            <div className="fixed bottom-8 left-6 z-[9999] flex gap-3 md:bottom-12 md:left-10 md:gap-4">
                 <button
-                    className={`flex h-16 w-16 touch-none items-center justify-center rounded-xl border-4 border-yellow-600 text-3xl shadow-lg select-none active:scale-95 md:h-20 md:w-20 md:text-4xl ${
+                    className={`flex h-20 w-20 touch-none items-center justify-center rounded-2xl border-4 border-yellow-600 text-4xl shadow-lg select-none active:scale-95 md:h-28 md:w-28 md:text-5xl ${
                         leftPressed ? 'bg-yellow-400 text-gray-900' : 'bg-yellow-500/90 text-gray-900'
                     }`}
                     onPointerDown={handleLeftDown}
@@ -215,7 +215,7 @@ export default function Game({ room, isHost, playerCostume }: Props) {
                     ◀
                 </button>
                 <button
-                    className={`flex h-16 w-16 touch-none items-center justify-center rounded-xl border-4 border-yellow-600 text-3xl shadow-lg select-none active:scale-95 md:h-20 md:w-20 md:text-4xl ${
+                    className={`flex h-20 w-20 touch-none items-center justify-center rounded-2xl border-4 border-yellow-600 text-4xl shadow-lg select-none active:scale-95 md:h-28 md:w-28 md:text-5xl ${
                         rightPressed ? 'bg-yellow-400 text-gray-900' : 'bg-yellow-500/90 text-gray-900'
                     }`}
                     onPointerDown={handleRightDown}
@@ -230,7 +230,7 @@ export default function Game({ room, isHost, playerCostume }: Props) {
             {/* Jump button on right side - bigger for easy thumb access */}
             <div className="fixed bottom-8 right-6 z-[9999] md:bottom-12 md:right-10">
                 <button
-                    className={`flex h-20 w-20 touch-none items-center justify-center rounded-full border-4 border-green-600 text-4xl shadow-lg select-none active:scale-95 md:h-24 md:w-24 md:text-5xl ${
+                    className={`flex h-24 w-24 touch-none items-center justify-center rounded-full border-4 border-green-600 text-5xl shadow-lg select-none active:scale-95 md:h-32 md:w-32 md:text-6xl ${
                         jumpPressed ? 'bg-green-400 text-gray-900' : 'bg-green-500/90 text-gray-900'
                     }`}
                     onPointerDown={handleJumpDown}
