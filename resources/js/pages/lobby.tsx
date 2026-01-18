@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { COSTUMES } from '@/game/costumes';
+import { LEVEL_INFO } from '@/game/levels';
 
 interface Room {
     id: number;
@@ -26,9 +27,9 @@ interface Props {
 export default function Lobby({ rooms, currentCostume }: Props) {
     const [showCreate, setShowCreate] = useState(false);
     const [showJoin, setShowJoin] = useState(false);
+    const [showPractice, setShowPractice] = useState(false);
     const [selectedCostume, setSelectedCostume] = useState(currentCostume);
     const [savingCostume, setSavingCostume] = useState(false);
-
     const createForm = useForm({
         name: '',
     });
@@ -167,11 +168,12 @@ export default function Lobby({ rooms, currentCostume }: Props) {
                     </div>
 
                     {/* Action buttons */}
-                    <div className="flex justify-center gap-4">
+                    <div className="flex flex-wrap justify-center gap-4">
                         <button
                             onClick={() => {
                                 setShowCreate(true);
                                 setShowJoin(false);
+                                setShowPractice(false);
                             }}
                             className="border-4 border-green-400 bg-green-400/20 px-8 py-4 text-lg text-green-400 transition-all hover:bg-green-400 hover:text-gray-900"
                             style={{ boxShadow: '4px 4px 0 #166534' }}
@@ -182,11 +184,23 @@ export default function Lobby({ rooms, currentCostume }: Props) {
                             onClick={() => {
                                 setShowJoin(true);
                                 setShowCreate(false);
+                                setShowPractice(false);
                             }}
                             className="border-4 border-blue-400 bg-blue-400/20 px-8 py-4 text-lg text-blue-400 transition-all hover:bg-blue-400 hover:text-gray-900"
                             style={{ boxShadow: '4px 4px 0 #1e40af' }}
                         >
                             JOIN ROOM
+                        </button>
+                        <button
+                            onClick={() => {
+                                setShowPractice(true);
+                                setShowCreate(false);
+                                setShowJoin(false);
+                            }}
+                            className="border-4 border-orange-400 bg-orange-400/20 px-8 py-4 text-lg text-orange-400 transition-all hover:bg-orange-400 hover:text-gray-900"
+                            style={{ boxShadow: '4px 4px 0 #c2410c' }}
+                        >
+                            PRACTICE
                         </button>
                     </div>
 
@@ -284,6 +298,47 @@ export default function Lobby({ rooms, currentCostume }: Props) {
                                     </Button>
                                 </div>
                             </form>
+                        </div>
+                    )}
+
+                    {/* Practice mode - level selector */}
+                    {showPractice && (
+                        <div
+                            className="border-4 border-orange-400 bg-gray-900/90 p-6"
+                            style={{ boxShadow: '6px 6px 0 #c2410c' }}
+                        >
+                            <h2 className="mb-4 text-xl text-orange-400">SELECT LEVEL</h2>
+                            <p className="mb-4 text-sm text-gray-400">
+                                Practice any level solo. Choose a level to start:
+                            </p>
+                            <div className="space-y-3">
+                                {LEVEL_INFO.map((level) => (
+                                    <Link
+                                        key={level.id}
+                                        href={`/practice/${level.id}`}
+                                        className="flex w-full items-center justify-between border-2 border-gray-700 bg-gray-800 p-4 transition-all hover:border-orange-400 hover:bg-gray-700"
+                                    >
+                                        <div className="text-left">
+                                            <div className="text-lg text-white">{level.name}</div>
+                                            <div className="text-sm text-gray-400">{level.description}</div>
+                                        </div>
+                                        <div className="text-2xl text-orange-400">
+                                            {level.id + 1}
+                                        </div>
+                                    </Link>
+                                ))}
+                            </div>
+                            <div className="mt-4">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setShowPractice(false)}
+                                    className="border-2 border-gray-600 text-gray-400 hover:bg-gray-800"
+                                    style={{ fontFamily: 'inherit' }}
+                                >
+                                    CANCEL
+                                </Button>
+                            </div>
                         </div>
                     )}
 

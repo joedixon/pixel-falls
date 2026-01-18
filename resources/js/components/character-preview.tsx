@@ -49,6 +49,12 @@ export default function CharacterPreview({ costumeId, size = 64, className = '' 
             case 'dk':
                 drawDK(pixel, costume);
                 break;
+            case 'galinda':
+                drawGalinda(pixel, costume);
+                break;
+            case 'elphaba':
+                drawElphaba(pixel, costume);
+                break;
             default:
                 drawAnimalWithEars(pixel, costume);
         }
@@ -726,4 +732,195 @@ function drawDK(pixel: (x: number, y: number, color: string) => void, c: typeof 
     pixel(9, 10, DARK);
     pixel(10, 10, DARK);
     pixel(11, 10, DARK);
+}
+
+// Galinda from Wicked
+function drawGalinda(pixel: (x: number, y: number, color: string) => void, c: typeof COSTUMES[number]) {
+    const SKIN = '#fcd9bd'; // Warm skin tone
+    const DRESS = c.belly; // Pink dress
+    const HAIR = c.ears; // Blonde
+    const TIARA = c.earInner; // Gold
+    const EYES = c.eyes;
+    const PINK_DARK = '#ec4899';
+    
+    // Blonde hair top (poofy curls)
+    pixel(6, 0, HAIR);
+    pixel(7, 0, HAIR);
+    pixel(8, 0, HAIR);
+    pixel(9, 0, HAIR);
+    
+    // Hair with tiara
+    pixel(5, 1, HAIR);
+    pixel(6, 1, HAIR);
+    pixel(7, 1, TIARA); // Tiara sparkle
+    pixel(8, 1, TIARA);
+    pixel(9, 1, HAIR);
+    pixel(10, 1, HAIR);
+    
+    // Forehead and hair sides
+    pixel(5, 2, HAIR);
+    pixel(6, 2, SKIN);
+    pixel(7, 2, SKIN);
+    pixel(8, 2, SKIN);
+    pixel(9, 2, SKIN);
+    pixel(10, 2, HAIR);
+    
+    // Eyes
+    pixel(5, 3, SKIN);
+    pixel(6, 3, EYES);
+    pixel(7, 3, SKIN);
+    pixel(8, 3, SKIN);
+    pixel(9, 3, EYES);
+    pixel(10, 3, SKIN);
+    
+    // Nose and rosy cheeks
+    pixel(5, 4, '#fda4af'); // Blush
+    pixel(6, 4, SKIN);
+    pixel(7, 4, SKIN);
+    pixel(8, 4, SKIN);
+    pixel(9, 4, SKIN);
+    pixel(10, 4, '#fda4af'); // Blush
+    
+    // Smile
+    pixel(6, 5, SKIN);
+    pixel(7, 5, PINK_DARK);
+    pixel(8, 5, PINK_DARK);
+    pixel(9, 5, SKIN);
+    
+    // Pink dress top
+    pixel(5, 6, DRESS);
+    pixel(6, 6, DRESS);
+    pixel(7, 6, DRESS);
+    pixel(8, 6, DRESS);
+    pixel(9, 6, DRESS);
+    pixel(10, 6, DRESS);
+    
+    // Arms and dress
+    pixel(4, 7, SKIN);
+    pixel(5, 7, DRESS);
+    pixel(6, 7, DRESS);
+    pixel(7, 7, '#fafafa'); // White trim
+    pixel(8, 7, '#fafafa');
+    pixel(9, 7, DRESS);
+    pixel(10, 7, DRESS);
+    pixel(11, 7, SKIN);
+    
+    // Ballgown dress
+    pixel(4, 8, DRESS);
+    pixel(5, 8, DRESS);
+    pixel(6, 8, DRESS);
+    pixel(7, 8, DRESS);
+    pixel(8, 8, DRESS);
+    pixel(9, 8, DRESS);
+    pixel(10, 8, DRESS);
+    pixel(11, 8, DRESS);
+    
+    // Wide skirt
+    pixel(3, 9, DRESS);
+    pixel(4, 9, DRESS);
+    pixel(5, 9, DRESS);
+    pixel(6, 9, DRESS);
+    pixel(7, 9, DRESS);
+    pixel(8, 9, DRESS);
+    pixel(9, 9, DRESS);
+    pixel(10, 9, DRESS);
+    pixel(11, 9, DRESS);
+    pixel(12, 9, DRESS);
+    
+    // Shoes
+    pixel(5, 10, PINK_DARK);
+    pixel(6, 10, PINK_DARK);
+    pixel(9, 10, PINK_DARK);
+    pixel(10, 10, PINK_DARK);
+}
+
+// Elphaba from Wicked
+function drawElphaba(pixel: (x: number, y: number, color: string) => void, c: typeof COSTUMES[number]) {
+    const SKIN = c.body; // Green!
+    const DRESS = c.belly; // Black
+    const HAIR = c.ears; // Black hair
+    const HAT = c.earInner; // Black hat
+    const EYES = c.eyes;
+    
+    // Witch hat point
+    pixel(7, 0, HAT);
+    pixel(8, 0, HAT);
+    
+    // Hat middle
+    pixel(6, 1, HAT);
+    pixel(7, 1, HAT);
+    pixel(8, 1, HAT);
+    pixel(9, 1, HAT);
+    
+    // Hat brim
+    pixel(4, 2, HAT);
+    pixel(5, 2, HAT);
+    pixel(6, 2, HAT);
+    pixel(7, 2, HAT);
+    pixel(8, 2, HAT);
+    pixel(9, 2, HAT);
+    pixel(10, 2, HAT);
+    pixel(11, 2, HAT);
+    
+    // Hair and forehead
+    pixel(5, 3, HAIR);
+    pixel(6, 3, SKIN);
+    pixel(7, 3, SKIN);
+    pixel(8, 3, SKIN);
+    pixel(9, 3, SKIN);
+    pixel(10, 3, HAIR);
+    
+    // Eyes - green skin visible
+    pixel(5, 4, SKIN);
+    pixel(6, 4, '#fafafa');
+    pixel(7, 4, EYES);
+    pixel(8, 4, '#fafafa');
+    pixel(9, 4, EYES);
+    pixel(10, 4, SKIN);
+    
+    // Nose
+    pixel(6, 5, SKIN);
+    pixel(7, 5, SKIN);
+    pixel(8, 5, SKIN);
+    pixel(9, 5, SKIN);
+    
+    // Black dress collar
+    pixel(5, 6, DRESS);
+    pixel(6, 6, DRESS);
+    pixel(7, 6, DRESS);
+    pixel(8, 6, DRESS);
+    pixel(9, 6, DRESS);
+    pixel(10, 6, DRESS);
+    
+    // Arms and dress
+    pixel(4, 7, SKIN);
+    pixel(5, 7, DRESS);
+    pixel(6, 7, DRESS);
+    pixel(7, 7, DRESS);
+    pixel(8, 7, DRESS);
+    pixel(9, 7, DRESS);
+    pixel(10, 7, DRESS);
+    pixel(11, 7, SKIN);
+    
+    // Dress body
+    pixel(5, 8, DRESS);
+    pixel(6, 8, DRESS);
+    pixel(7, 8, DRESS);
+    pixel(8, 8, DRESS);
+    pixel(9, 8, DRESS);
+    pixel(10, 8, DRESS);
+    
+    // Dress skirt
+    pixel(5, 9, DRESS);
+    pixel(6, 9, DRESS);
+    pixel(7, 9, DRESS);
+    pixel(8, 9, DRESS);
+    pixel(9, 9, DRESS);
+    pixel(10, 9, DRESS);
+    
+    // Boots
+    pixel(5, 10, HAT);
+    pixel(6, 10, HAT);
+    pixel(9, 10, HAT);
+    pixel(10, 10, HAT);
 }

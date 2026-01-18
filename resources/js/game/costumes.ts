@@ -195,6 +195,31 @@ export const COSTUMES = [
         eyes: '#1f2937',
         type: 'dk' as const,
     },
+    // Wicked characters!
+    { 
+        id: 16, 
+        name: 'Galinda', 
+        body: '#fce7f3', // Light pink skin
+        bodyDark: '#fbcfe8',
+        belly: '#f9a8d4', // Pink dress
+        ears: '#fde68a', // Blonde hair
+        earInner: '#fbbf24', // Gold tiara
+        nose: '#fce7f3',
+        eyes: '#60a5fa', // Blue eyes
+        type: 'galinda' as const,
+    },
+    { 
+        id: 17, 
+        name: 'Elphaba', 
+        body: '#22c55e', // Green skin
+        bodyDark: '#16a34a',
+        belly: '#1f2937', // Black dress
+        ears: '#1f2937', // Black hair
+        earInner: '#1f2937', // Witch hat
+        nose: '#22c55e',
+        eyes: '#1f2937', // Dark eyes
+        type: 'elphaba' as const,
+    },
 ];
 
 export type Costume = typeof COSTUMES[number];

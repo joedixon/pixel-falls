@@ -29,7 +29,7 @@ class GameRoomController extends Controller
     public function updateCostume(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'costume' => ['required', 'integer', 'min:0', 'max:15'],
+            'costume' => ['required', 'integer', 'min:0', 'max:17'],
         ]);
 
         $request->user()->update(['costume' => $validated['costume']]);
@@ -51,7 +51,7 @@ class GameRoomController extends Controller
         return redirect()->route('game.show', $room->code);
     }
 
-    public function show(string $code): Response|RedirectResponse
+    public function show(Request $request, string $code): Response|RedirectResponse
     {
         $room = GameRoom::where('code', $code)->first();
 
@@ -59,10 +59,14 @@ class GameRoomController extends Controller
             return redirect()->route('lobby')->with('error', 'Room not found');
         }
 
+        // Get starting level from query param (default 0)
+        $startLevel = (int) $request->query('level', 0);
+
         return Inertia::render('game', [
             'room' => $room->only(['id', 'code', 'name', 'status', 'max_players']),
             'isHost' => $room->host_id === auth()->id(),
             'playerCostume' => auth()->user()->costume ?? 0,
+            'startLevel' => $startLevel,
         ]);
     }
 
@@ -83,6 +87,14 @@ class GameRoomController extends Controller
         }
 
         return redirect()->route('game.show', $room->code);
+    }
+
+    public function practice(int $level): Response
+    {
+        return Inertia::render('practice', [
+            'playerCostume' => auth()->user()->costume ?? 0,
+            'startLevel' => $level,
+        ]);
     }
 
     public function move(Request $request, GameRoom $room): JsonResponse

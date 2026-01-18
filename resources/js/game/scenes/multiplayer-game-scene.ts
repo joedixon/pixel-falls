@@ -69,6 +69,14 @@ const COSTUMES_DATA = [
         body: 0x92400e, bodyDark: 0x78350f, belly: 0xd4a574,
         ears: 0x92400e, earInner: 0xd4a574, nose: 0x78350f, eyes: 0x1f2937, type: 'dk',
     },
+    { // Galinda
+        body: 0xfce7f3, bodyDark: 0xfbcfe8, belly: 0xf9a8d4,
+        ears: 0xfde68a, earInner: 0xfbbf24, nose: 0xfce7f3, eyes: 0x60a5fa, type: 'galinda',
+    },
+    { // Elphaba
+        body: 0x22c55e, bodyDark: 0x16a34a, belly: 0x1f2937,
+        ears: 0x1f2937, earInner: 0x1f2937, nose: 0x22c55e, eyes: 0x1f2937, type: 'elphaba',
+    },
 ] as const;
 
 const GROUND_COLORS = {
@@ -97,6 +105,133 @@ interface PlayerMovedData {
     flipX: boolean;
 }
 
+// Level configuration interface
+interface LevelConfig {
+    name: string;
+    // Platforms: [x, y, widthInTiles, tileType?] - tileType defaults to 'platform'
+    platforms: [number, number, number, string?][];
+    // Hazard zones: [startX, endX, hazardType] - hazardType: 'lava', 'void', 'spikes'
+    hazards: [number, number, string][];
+    // Ground sections: [startX, endX, groundType] - for themed ground
+    groundSections?: [number, number, string][];
+    // Spawn position
+    spawnX: number;
+    spawnY: number;
+    // Finish line X position
+    finishX: number;
+    // Theme (affects background color)
+    theme?: 'default' | 'wicked';
+}
+
+// Level definitions
+const LEVELS: LevelConfig[] = [
+    {
+        name: 'Level 1',
+        platforms: [
+            // Section 1 - Stepping stones
+            [180, 140, 3],
+            [280, 120, 2],
+            [380, 100, 3],
+            // Section 2 - Staircase up
+            [520, 140, 2],
+            [580, 120, 2],
+            [640, 100, 2],
+            // Section 3 - High platforms
+            [780, 80, 4],
+            [880, 100, 2],
+            [960, 120, 3],
+            // Section 4 - More challenges
+            [1100, 100, 3],
+            [1200, 80, 4],
+            [1300, 100, 3],
+            // Section 5 - Final stretch
+            [1400, 80, 4],
+            [1480, 100, 3],
+        ],
+        hazards: [
+            [200, 420, 'lava'],
+            [540, 700, 'lava'],
+            [800, 1000, 'lava'],
+            [1120, 1280, 'lava'],
+            [1420, 1520, 'lava'],
+        ],
+        spawnX: 64,
+        spawnY: WORLD_HEIGHT - 40,
+        finishX: WORLD_WIDTH - 40,
+        theme: 'default',
+    },
+    {
+        name: 'Level 2: Wicked',
+        theme: 'wicked',
+        groundSections: [
+            // The Grand Library of Shiz University
+            [0, 350, 'library'],
+            // Yellow brick road to dormitory - watch for gaps!
+            [350, 420, 'yellowBrick'],
+            [450, 530, 'yellowBrick'],
+            [560, 650, 'yellowBrick'],
+            // Galinda & Elphaba's Dormitory
+            [650, 900, 'dormitory'],
+            // Yellow brick road to classroom - treacherous path!
+            [900, 980, 'yellowBrick'],
+            [1020, 1100, 'yellowBrick'],
+            [1140, 1220, 'yellowBrick'],
+            [1260, 1300, 'yellowBrick'],
+            // Dr. Dillamond's Classroom
+            [1300, 1600, 'classroom'],
+        ],
+        platforms: [
+            // Library - tight carousel gauntlet
+            [60, 130, 2, 'carousel'],
+            [120, 100, 2, 'carousel'],
+            [180, 70, 2, 'carousel'],
+            [250, 100, 2, 'carousel'],
+            [310, 130, 2, 'carousel'],
+            
+            // Yellow brick road 1 - required emerald platforms over voids
+            [425, 120, 2, 'emerald'],  // Over first gap
+            [535, 100, 2, 'emerald'],  // Over second gap
+            
+            // Dormitory - Galinda's luggage obstacles!
+            [680, 140, 2, 'luggage'],
+            [740, 110, 2, 'luggage'],
+            [800, 80, 2, 'luggage'],
+            [860, 110, 2, 'luggage'],
+            
+            // Yellow brick road 2 - trickier emerald jumps over voids
+            [985, 110, 2, 'emerald'],  // Over gap
+            [1105, 90, 2, 'emerald'],  // Over gap
+            [1225, 100, 2, 'emerald'], // Over gap
+            
+            // Dr. Dillamond's Classroom - desk obstacle course
+            [1340, 140, 2, 'desk'],
+            [1400, 110, 2, 'desk'],
+            [1460, 80, 2, 'desk'],
+            [1520, 110, 2, 'desk'],
+            [1560, 140, 2, 'desk'],
+        ],
+        hazards: [
+            // Void gaps on yellow brick roads (fall = reset!)
+            [420, 450, 'void'],  // Gap 1
+            [530, 560, 'void'],  // Gap 2
+            [980, 1020, 'void'], // Gap 3
+            [1100, 1140, 'void'], // Gap 4
+            [1220, 1260, 'void'], // Gap 5
+            // Spikes in the library
+            [100, 115, 'spikes'],
+            [200, 215, 'spikes'],
+            // Spikes in the dormitory
+            [760, 780, 'spikes'],
+            // Spikes in the classroom - Dr. Dillamond's defenses!
+            [1370, 1390, 'spikes'],
+            [1490, 1510, 'spikes'],
+        ],
+        spawnX: 32,
+        spawnY: WORLD_HEIGHT - 40,
+        finishX: WORLD_WIDTH - 30,
+    },
+];
+
 export class MultiplayerGameScene extends Phaser.Scene {
     private player!: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
     private playerNameText!: Phaser.GameObjects.Text;
@@ -116,6 +251,9 @@ export class MultiplayerGameScene extends Phaser.Scene {
     private spawnX = 64;
     private spawnY = WORLD_HEIGHT - 40;
     private victoryText?: Phaser.GameObjects.Text;
+    private levelText?: Phaser.GameObjects.Text;
+    private currentLevel = 0;
+    private backgroundElements: Phaser.GameObjects.GameObject[] = [];
     private remotePlayers: Map<string, RemotePlayer> = new Map();
     private lastSentPosition = { x: 0, y: 0 };
     private sendInterval = 50; // Send position every 50ms
@@ -128,8 +266,11 @@ export class MultiplayerGameScene extends Phaser.Scene {
         private playerId: number,
         private playerName: string,
         private playerCostume: number = 0,
+        startLevel: number = 0,
+        private isPractice: boolean = false,
     ) {
         super({ key: 'MultiplayerGameScene' });
+        this.currentLevel = startLevel;
     }
 
     preload(): void {
@@ -139,7 +280,21 @@ export class MultiplayerGameScene extends Phaser.Scene {
         }
         this.createGroundTile();
         this.createLavaSprite();
+        this.createPlatformTile();
         this.createFinishLineSprite();
+        // Wicked themed sprites
+        this.createYellowBrickTile();
+        this.createLibraryTile();
+        this.createDormitoryTile();
+        this.createClassroomTile();
+        this.createBookshelfPlatform();
+        this.createCarouselPlatform();
+        this.createEmeraldPlatform();
+        this.createFurniturePlatform();
+        this.createLuggagePlatform();
+        this.createDeskPlatform();
+        this.createVoidTile();
+        this.createSpikesTile();
     }
 
     private createAnimalSprites(costumeIndex: number): void {
@@ -200,6 +355,12 @@ export class MultiplayerGameScene extends Phaser.Scene {
                 break;
             case 'dk':
                 this.drawDKFrame(pixel, frame, walkOffset, c);
+                break;
+            case 'galinda':
+                this.drawGalindaFrame(pixel, frame, walkOffset, c);
+                break;
+            case 'elphaba':
+                this.drawElphabaFrame(pixel, frame, walkOffset, c);
                 break;
             default:
                 this.drawAnimalWithEarsFrame(pixel, frame, walkOffset, c);
@@ -979,6 +1140,210 @@ export class MultiplayerGameScene extends Phaser.Scene {
         pixel(11, 11 - legOffset, DARK);
     }
 
+    private drawGalindaFrame(
+        pixel: (x: number, y: number, color: number) => void,
+        frame: number,
+        walkOffset: number,
+        c: typeof COSTUMES_DATA[number],
+    ): void {
+        const SKIN = 0xfcd9bd; // Warm skin tone
+        const DRESS = c.belly; // Pink dress
+        const HAIR = c.ears; // Blonde
+        const TIARA = c.earInner; // Gold
+        const EYES = c.eyes;
+        const PINK_DARK = 0xec4899;
+        
+        // Blonde hair top (poofy curls)
+        pixel(6, 0, HAIR);
+        pixel(7, 0, HAIR);
+        pixel(8, 0, HAIR);
+        pixel(9, 0, HAIR);
+        
+        // Hair with tiara
+        pixel(5, 1, HAIR);
+        pixel(6, 1, HAIR);
+        pixel(7, 1, TIARA); // Tiara sparkle
+        pixel(8, 1, TIARA);
+        pixel(9, 1, HAIR);
+        pixel(10, 1, HAIR);
+        
+        // Forehead and hair sides
+        pixel(5, 2, HAIR);
+        pixel(6, 2, SKIN);
+        pixel(7, 2, SKIN);
+        pixel(8, 2, SKIN);
+        pixel(9, 2, SKIN);
+        pixel(10, 2, HAIR);
+        
+        // Eyes
+        pixel(5, 3, SKIN);
+        pixel(6, 3, EYES);
+        pixel(7, 3, SKIN);
+        pixel(8, 3, SKIN);
+        pixel(9, 3, EYES);
+        pixel(10, 3, SKIN);
+        
+        // Nose and rosy cheeks
+        pixel(5, 4, 0xfda4af); // Blush
+        pixel(6, 4, SKIN);
+        pixel(7, 4, SKIN);
+        pixel(8, 4, SKIN);
+        pixel(9, 4, SKIN);
+        pixel(10, 4, 0xfda4af); // Blush
+        
+        // Smile
+        pixel(6, 5, SKIN);
+        pixel(7, 5, PINK_DARK);
+        pixel(8, 5, PINK_DARK);
+        pixel(9, 5, SKIN);
+        
+        // Pink dress top
+        pixel(5, 6, DRESS);
+        pixel(6, 6, DRESS);
+        pixel(7, 6, DRESS);
+        pixel(8, 6, DRESS);
+        pixel(9, 6, DRESS);
+        pixel(10, 6, DRESS);
+        
+        // Arms and dress with animation
+        const armSwing = frame === 0 ? 0 : Math.round(walkOffset);
+        pixel(4, 7 + armSwing, SKIN);
+        pixel(5, 7, DRESS);
+        pixel(6, 7, DRESS);
+        pixel(7, 7, 0xfafafa); // White trim
+        pixel(8, 7, 0xfafafa);
+        pixel(9, 7, DRESS);
+        pixel(10, 7, DRESS);
+        pixel(11, 7 - armSwing, SKIN);
+        
+        // Ballgown dress
+        pixel(4, 8, DRESS);
+        pixel(5, 8, DRESS);
+        pixel(6, 8, DRESS);
+        pixel(7, 8, DRESS);
+        pixel(8, 8, DRESS);
+        pixel(9, 8, DRESS);
+        pixel(10, 8, DRESS);
+        pixel(11, 8, DRESS);
+        
+        // Wide skirt
+        pixel(3, 9, DRESS);
+        pixel(4, 9, DRESS);
+        pixel(5, 9, DRESS);
+        pixel(6, 9, DRESS);
+        pixel(7, 9, DRESS);
+        pixel(8, 9, DRESS);
+        pixel(9, 9, DRESS);
+        pixel(10, 9, DRESS);
+        pixel(11, 9, DRESS);
+        pixel(12, 9, DRESS);
+        
+        // Shoes with animation
+        const legOffset = frame === 0 ? 0 : Math.round(walkOffset);
+        pixel(5, 10 + legOffset, PINK_DARK);
+        pixel(6, 10 + legOffset, PINK_DARK);
+        pixel(9, 10 - legOffset, PINK_DARK);
+        pixel(10, 10 - legOffset, PINK_DARK);
+    }
+
+    private drawElphabaFrame(
+        pixel: (x: number, y: number, color: number) => void,
+        frame: number,
+        walkOffset: number,
+        c: typeof COSTUMES_DATA[number],
+    ): void {
+        const SKIN = c.body; // Green!
+        const DRESS = c.belly; // Black
+        const HAIR = c.ears; // Black hair
+        const HAT = c.earInner; // Black hat
+        const EYES = c.eyes;
+        const WHITE = 0xfafafa;
+        
+        // Witch hat point
+        pixel(7, 0, HAT);
+        pixel(8, 0, HAT);
+        
+        // Hat middle
+        pixel(6, 1, HAT);
+        pixel(7, 1, HAT);
+        pixel(8, 1, HAT);
+        pixel(9, 1, HAT);
+        
+        // Hat brim
+        pixel(4, 2, HAT);
+        pixel(5, 2, HAT);
+        pixel(6, 2, HAT);
+        pixel(7, 2, HAT);
+        pixel(8, 2, HAT);
+        pixel(9, 2, HAT);
+        pixel(10, 2, HAT);
+        pixel(11, 2, HAT);
+        
+        // Hair and forehead
+        pixel(5, 3, HAIR);
+        pixel(6, 3, SKIN);
+        pixel(7, 3, SKIN);
+        pixel(8, 3, SKIN);
+        pixel(9, 3, SKIN);
+        pixel(10, 3, HAIR);
+        
+        // Eyes - green skin visible
+        pixel(5, 4, SKIN);
+        pixel(6, 4, WHITE);
+        pixel(7, 4, EYES);
+        pixel(8, 4, WHITE);
+        pixel(9, 4, EYES);
+        pixel(10, 4, SKIN);
+        
+        // Nose
+        pixel(6, 5, SKIN);
+        pixel(7, 5, SKIN);
+        pixel(8, 5, SKIN);
+        pixel(9, 5, SKIN);
+        
+        // Black dress collar
+        pixel(5, 6, DRESS);
+        pixel(6, 6, DRESS);
+        pixel(7, 6, DRESS);
+        pixel(8, 6, DRESS);
+        pixel(9, 6, DRESS);
+        pixel(10, 6, DRESS);
+        
+        // Arms and dress with animation
+        const armSwing = frame === 0 ? 0 : Math.round(walkOffset);
+        pixel(4, 7 + armSwing, SKIN);
+        pixel(5, 7, DRESS);
+        pixel(6, 7, DRESS);
+        pixel(7, 7, DRESS);
+        pixel(8, 7, DRESS);
+        pixel(9, 7, DRESS);
+        pixel(10, 7, DRESS);
+        pixel(11, 7 - armSwing, SKIN);
+        
+        // Dress body
+        pixel(5, 8, DRESS);
+        pixel(6, 8, DRESS);
+        pixel(7, 8, DRESS);
+        pixel(8, 8, DRESS);
+        pixel(9, 8, DRESS);
+        pixel(10, 8, DRESS);
+        
+        // Dress skirt
+        pixel(5, 9, DRESS);
+        pixel(6, 9, DRESS);
+        pixel(7, 9, DRESS);
+        pixel(8, 9, DRESS);
+        pixel(9, 9, DRESS);
+        pixel(10, 9, DRESS);
+        
+        // Boots with animation
+        const legOffset = frame === 0 ? 0 : Math.round(walkOffset);
+        pixel(5, 10 + legOffset, HAT);
+        pixel(6, 10 + legOffset, HAT);
+        pixel(9, 10 - legOffset, HAT);
+        pixel(10, 10 - legOffset, HAT);
+    }
+
     private createGroundTile(): void {
         const size = 16;
         const canvas = document.createElement('canvas');
@@ -1079,6 +1444,347 @@ export class MultiplayerGameScene extends Phaser.Scene {
 
         this.textures.addImage('finishLine', canvas);
     }
+
+    // === WICKED THEMED SPRITES ===
+    
+    private createYellowBrickTile(): void {
+        const size = 16;
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d')!;
+
+        // Yellow brick base
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(0, 0, size, size);
+
+        // Brick pattern - darker lines
+        ctx.fillStyle = '#d97706';
+        // Horizontal mortar lines
+        ctx.fillRect(0, 4, size, 1);
+        ctx.fillRect(0, 9, size, 1);
+        ctx.fillRect(0, 14, size, 1);
+        // Vertical mortar lines (offset per row)
+        ctx.fillRect(8, 0, 1, 4);
+        ctx.fillRect(4, 5, 1, 4);
+        ctx.fillRect(12, 5, 1, 4);
+        ctx.fillRect(8, 10, 1, 4);
+
+        // Highlight on top
+        ctx.fillStyle = '#fcd34d';
+        ctx.fillRect(0, 0, size, 1);
+
+        this.textures.addImage('yellowBrick', canvas);
+    }
+
+    private createLibraryTile(): void {
+        const size = 16;
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d')!;
+
+        // Dark wood floor
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(0, 0, size, size);
+
+        // Wood grain pattern
+        ctx.fillStyle = '#92400e';
+        ctx.fillRect(0, 0, size, 3);
+        ctx.fillRect(0, 8, size, 2);
+        ctx.fillStyle = '#451a03';
+        ctx.fillRect(4, 0, 1, size);
+        ctx.fillRect(12, 0, 1, size);
+
+        this.textures.addImage('library', canvas);
+    }
+
+    private createDormitoryTile(): void {
+        const size = 16;
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d')!;
+
+        // Carpet - Shiz University green
+        ctx.fillStyle = '#166534';
+        ctx.fillRect(0, 0, size, size);
+
+        // Carpet pattern
+        ctx.fillStyle = '#15803d';
+        for (let y = 0; y < size; y += 4) {
+            for (let x = (y % 8 === 0 ? 0 : 2); x < size; x += 4) {
+                ctx.fillRect(x, y, 2, 2);
+            }
+        }
+
+        this.textures.addImage('dormitory', canvas);
+    }
+
+    private createClassroomTile(): void {
+        const size = 16;
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d')!;
+
+        // Stone floor
+        ctx.fillStyle = '#64748b';
+        ctx.fillRect(0, 0, size, size);
+
+        // Tile pattern
+        ctx.fillStyle = '#475569';
+        ctx.fillRect(0, 0, 8, 8);
+        ctx.fillRect(8, 8, 8, 8);
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillRect(0, 0, size, 1);
+        ctx.fillRect(0, 8, size, 1);
+
+        this.textures.addImage('classroom', canvas);
+    }
+
+    private createBookshelfPlatform(): void {
+        const size = 16;
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d')!;
+
+        // Wood shelf
+        ctx.fillStyle = '#92400e';
+        ctx.fillRect(0, 0, size, size);
+
+        // Books on shelf (colorful spines)
+        const bookColors = ['#dc2626', '#2563eb', '#16a34a', '#9333ea', '#ca8a04'];
+        for (let x = 1; x < size - 1; x += 3) {
+            ctx.fillStyle = bookColors[(x / 3) % bookColors.length];
+            ctx.fillRect(x, 2, 2, 12);
+        }
+
+        // Shelf edge highlight
+        ctx.fillStyle = '#a16207';
+        ctx.fillRect(0, 0, size, 2);
+
+        this.textures.addImage('bookshelf', canvas);
+    }
+
+    private createCarouselPlatform(): void {
+        const size = 16;
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d')!;
+
+        // Circular bookshelf carousel - top-down view
+        // Outer ring (dark wood)
+        ctx.fillStyle = '#451a03';
+        ctx.fillRect(0, 0, size, size);
+
+        // Inner circle (lighter wood)
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(2, 2, 12, 12);
+
+        // Book compartments (colored books visible from top)
+        ctx.fillStyle = '#7f1d1d'; // Red book
+        ctx.fillRect(3, 3, 4, 4);
+        ctx.fillStyle = '#1e3a5f'; // Blue book
+        ctx.fillRect(9, 3, 4, 4);
+        ctx.fillStyle = '#14532d'; // Green book
+        ctx.fillRect(3, 9, 4, 4);
+        ctx.fillStyle = '#4c1d95'; // Purple book
+        ctx.fillRect(9, 9, 4, 4);
+
+        // Central axis
+        ctx.fillStyle = '#92400e';
+        ctx.fillRect(6, 6, 4, 4);
+
+        // Gold accents
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(7, 7, 2, 2);
+        ctx.fillRect(0, 7, 1, 2);
+        ctx.fillRect(15, 7, 1, 2);
+        ctx.fillRect(7, 0, 2, 1);
+        ctx.fillRect(7, 15, 2, 1);
+
+        this.textures.addImage('carousel', canvas);
+    }
+
+    private createEmeraldPlatform(): void {
+        const size = 16;
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d')!;
+
+        // Emerald green base
+        ctx.fillStyle = '#059669';
+        ctx.fillRect(0, 0, size, size);
+
+        // Gem facets
+        ctx.fillStyle = '#10b981';
+        ctx.fillRect(2, 2, 6, 6);
+        ctx.fillRect(8, 8, 6, 6);
+        ctx.fillStyle = '#047857';
+        ctx.fillRect(8, 2, 6, 6);
+        ctx.fillRect(2, 8, 6, 6);
+
+        // Sparkle
+        ctx.fillStyle = '#a7f3d0';
+        ctx.fillRect(4, 4, 2, 2);
+        ctx.fillRect(11, 3, 1, 1);
+
+        // Top highlight
+        ctx.fillStyle = '#34d399';
+        ctx.fillRect(0, 0, size, 2);
+
+        this.textures.addImage('emerald', canvas);
+    }
+
+    private createFurniturePlatform(): void {
+        const size = 16;
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d')!;
+
+        // Bed frame - pink/rose (Galinda's side of the room!)
+        ctx.fillStyle = '#f472b6';
+        ctx.fillRect(0, 0, size, size);
+
+        // Quilted pattern
+        ctx.fillStyle = '#ec4899';
+        ctx.fillRect(0, 4, size, 2);
+        ctx.fillRect(0, 10, size, 2);
+        ctx.fillRect(4, 0, 2, size);
+        ctx.fillRect(10, 0, 2, size);
+
+        // Pillow/headboard highlight
+        ctx.fillStyle = '#fbcfe8';
+        ctx.fillRect(0, 0, size, 3);
+
+        this.textures.addImage('furniture', canvas);
+    }
+
+    private createLuggagePlatform(): void {
+        const size = 16;
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d')!;
+
+        // Pink luggage trunk (Galinda's style!)
+        ctx.fillStyle = '#ec4899'; // Hot pink
+        ctx.fillRect(0, 0, size, size);
+
+        // Darker pink edges
+        ctx.fillStyle = '#db2777';
+        ctx.fillRect(0, 0, size, 2);
+        ctx.fillRect(0, size - 2, size, 2);
+        ctx.fillRect(0, 0, 2, size);
+        ctx.fillRect(size - 2, 0, 2, size);
+
+        // Gold clasp/buckle
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(5, 6, 6, 4);
+        ctx.fillStyle = '#f59e0b';
+        ctx.fillRect(6, 7, 4, 2);
+
+        // Decorative straps
+        ctx.fillStyle = '#fce7f3';
+        ctx.fillRect(0, 5, size, 1);
+        ctx.fillRect(0, 10, size, 1);
+
+        // Sparkle (Galinda loves sparkles!)
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(12, 3, 2, 2);
+
+        this.textures.addImage('luggage', canvas);
+    }
+
+    private createDeskPlatform(): void {
+        const size = 16;
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d')!;
+
+        // Wooden desk
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(0, 0, size, size);
+
+        // Papers/books on desk
+        ctx.fillStyle = '#fafafa';
+        ctx.fillRect(2, 4, 5, 7);
+        ctx.fillStyle = '#22c55e'; // Green book (Animal history?)
+        ctx.fillRect(9, 3, 4, 8);
+
+        // Desk edge
+        ctx.fillStyle = '#451a03';
+        ctx.fillRect(0, 0, size, 2);
+        ctx.fillRect(0, 14, size, 2);
+
+        this.textures.addImage('desk', canvas);
+    }
+
+    private createVoidTile(): void {
+        const size = 16;
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d')!;
+
+        // Dark void/pit
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(0, 0, size, size);
+
+        // Swirling darkness pattern
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(2, 2, 4, 4);
+        ctx.fillRect(10, 6, 4, 4);
+        ctx.fillRect(4, 10, 5, 4);
+
+        // Faint green magical glow at edges
+        ctx.fillStyle = '#22c55e20';
+        ctx.fillRect(0, 0, size, 2);
+
+        this.textures.addImage('void', canvas);
+    }
+
+    private createSpikesTile(): void {
+        const size = 16;
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d')!;
+
+        // Base
+        ctx.fillStyle = '#374151';
+        ctx.fillRect(0, 12, size, 4);
+
+        // Metal spikes
+        ctx.fillStyle = '#6b7280';
+        // Spike 1
+        ctx.fillRect(1, 8, 2, 4);
+        ctx.fillRect(2, 4, 1, 4);
+        // Spike 2
+        ctx.fillRect(5, 8, 2, 4);
+        ctx.fillRect(6, 4, 1, 4);
+        // Spike 3
+        ctx.fillRect(9, 8, 2, 4);
+        ctx.fillRect(10, 4, 1, 4);
+        // Spike 4
+        ctx.fillRect(13, 8, 2, 4);
+        ctx.fillRect(14, 4, 1, 4);
+
+        // Spike tips - sharp!
+        ctx.fillStyle = '#9ca3af';
+        ctx.fillRect(2, 2, 1, 2);
+        ctx.fillRect(6, 2, 1, 2);
+        ctx.fillRect(10, 2, 1, 2);
+        ctx.fillRect(14, 2, 1, 2);
+
+        this.textures.addImage('spikes', canvas);
+    }
     
     private createPlatformTile(): void {
         const size = 16;
@@ -1107,92 +1813,420 @@ export class MultiplayerGameScene extends Phaser.Scene {
         this.textures.addImage('platform', canvas);
     }
     
-    private createBackground(): void {
-        // Draw pixel art mountains in the background
-        const bgWidth = WORLD_WIDTH;
+    private createBackground(theme: string = 'default'): void {
+        // Clear existing background elements
+        this.backgroundElements.forEach(el => el.destroy());
+        this.backgroundElements = [];
+
+        if (theme === 'wicked') {
+            this.createWickedBackground();
+        } else {
+            this.createDefaultBackground();
+        }
+    }
+
+    private createDefaultBackground(): void {
         const bgHeight = WORLD_HEIGHT;
         
         // Far mountains (slowest scroll)
         const farMountains = this.add.graphics();
-        farMountains.fillStyle(0x2d3748); // Dark blue-gray
-        // Mountain 1
+        farMountains.fillStyle(0x2d3748);
         farMountains.fillTriangle(0, bgHeight - 16, 80, 40, 160, bgHeight - 16);
-        // Mountain 2
         farMountains.fillTriangle(120, bgHeight - 16, 200, 30, 280, bgHeight - 16);
-        // Mountain 3
         farMountains.fillTriangle(240, bgHeight - 16, 350, 45, 460, bgHeight - 16);
-        // Mountain 4
         farMountains.fillTriangle(400, bgHeight - 16, 520, 35, 640, bgHeight - 16);
-        // Mountain 5
         farMountains.fillTriangle(580, bgHeight - 16, 700, 50, 820, bgHeight - 16);
-        // Mountain 6
         farMountains.fillTriangle(760, bgHeight - 16, 880, 40, 1000, bgHeight - 16);
-        farMountains.setScrollFactor(0.2, 1); // Slow parallax
+        farMountains.setScrollFactor(0.2, 1);
+        this.backgroundElements.push(farMountains);
         
-        // Near hills (medium scroll)
+        // Near hills
         const nearHills = this.add.graphics();
-        nearHills.fillStyle(0x4a5568); // Lighter gray
-        // Hill 1
+        nearHills.fillStyle(0x4a5568);
         nearHills.fillTriangle(-20, bgHeight - 16, 60, 80, 140, bgHeight - 16);
-        // Hill 2
         nearHills.fillTriangle(100, bgHeight - 16, 180, 70, 260, bgHeight - 16);
-        // Hill 3
         nearHills.fillTriangle(220, bgHeight - 16, 320, 85, 420, bgHeight - 16);
-        // Hill 4
         nearHills.fillTriangle(380, bgHeight - 16, 480, 75, 580, bgHeight - 16);
-        // Hill 5
         nearHills.fillTriangle(540, bgHeight - 16, 650, 80, 760, bgHeight - 16);
-        // Hill 6
         nearHills.fillTriangle(700, bgHeight - 16, 820, 70, 940, bgHeight - 16);
-        // Hill 7
         nearHills.fillTriangle(880, bgHeight - 16, 960, 85, 1040, bgHeight - 16);
-        nearHills.setScrollFactor(0.5, 1); // Medium parallax
+        nearHills.setScrollFactor(0.5, 1);
+        this.backgroundElements.push(nearHills);
         
-        // Add some stars/clouds in the sky
+        // Stars
         const skyDecor = this.add.graphics();
-        skyDecor.fillStyle(0x6366f1, 0.3); // Faint purple
-        // Scattered dots for stars
+        skyDecor.fillStyle(0x6366f1, 0.3);
         for (let i = 0; i < 30; i++) {
-            const x = Math.random() * bgWidth;
+            const x = Math.random() * WORLD_WIDTH;
             const y = Math.random() * 60 + 10;
             skyDecor.fillRect(x, y, 2, 2);
         }
-        skyDecor.setScrollFactor(0.1, 1); // Very slow parallax
-    }
-    
-    private createPlatforms(): void {
-        // Create platform texture
-        this.createPlatformTile();
-        
-        // Define platform positions: [x, y, width in tiles]
-        const platformData = [
-            // Section 1 - Stepping stones
-            [120, 140, 3],
-            [200, 120, 2],
-            [280, 100, 3],
-            
-            // Section 2 - Staircase up
-            [380, 140, 2],
-            [420, 120, 2],
-            [460, 100, 2],
-            
-            // Section 3 - High platforms
-            [540, 80, 4],
-            [620, 100, 2],
-            [680, 120, 3],
-            
-            // Section 4 - Final stretch
-            [780, 100, 3],
-            [860, 80, 4],
-        ];
-        
-        for (const [x, y, widthTiles] of platformData) {
-            for (let i = 0; i < widthTiles; i++) {
-                this.ground.create(x + i * 16, y, 'platform');
-            }
-        }
+        skyDecor.setScrollFactor(0.1, 1);
+        this.backgroundElements.push(skyDecor);
     }
 
+    private createWickedBackground(): void {
+        const bgHeight = WORLD_HEIGHT;
+        
+        // Define continuous background areas (not fragmented by voids)
+        const backgroundAreas: [number, number, string][] = [
+            [0, 350, 'library'],
+            [350, 650, 'yellowBrick'],
+            [650, 900, 'dormitory'],
+            [900, 1300, 'yellowBrick'],
+            [1300, 1600, 'classroom'],
+        ];
+        
+        // Draw section-specific backgrounds
+        for (const [startX, endX, sectionType] of backgroundAreas) {
+            const sectionWidth = endX - startX;
+            const bg = this.add.graphics();
+            
+            if (sectionType === 'library') {
+                // Shiz University Library - circular rotating bookshelves
+                
+                // Dark ornate walls with green tint
+                bg.fillStyle(0x0f1f1a);
+                bg.fillRect(startX, 0, sectionWidth, bgHeight - 16);
+                
+                // Vaulted ceiling with green magical glow
+                bg.fillStyle(0x22c55e, 0.15);
+                bg.fillRect(startX, 0, sectionWidth, 30);
+                bg.fillStyle(0x166534, 0.1);
+                bg.fillRect(startX, 30, sectionWidth, 20);
+                
+                // Ornate arched windows along back wall
+                const windowSpacing = 100;
+                for (let wx = startX + 50; wx < endX - 30; wx += windowSpacing) {
+                    // Arched window frame
+                    bg.fillStyle(0x451a03);
+                    bg.fillRect(wx, 10, 36, 55);
+                    // Window inner (green light from Emerald City)
+                    bg.fillStyle(0x166534);
+                    bg.fillRect(wx + 3, 13, 30, 49);
+                    // Arch detail
+                    bg.fillStyle(0x22c55e, 0.5);
+                    bg.fillRect(wx + 6, 16, 24, 20);
+                }
+                
+                // Circular rotating bookshelves in background (the iconic Shiz library look!)
+                const carouselSpacing = 90;
+                for (let cx = startX + 45; cx < endX - 40; cx += carouselSpacing) {
+                    // Draw circular bookshelf carousel
+                    const centerY = bgHeight - 55;
+                    const radius = 35;
+                    
+                    // Central pillar/axis
+                    bg.fillStyle(0x78350f);
+                    bg.fillRect(cx - 4, centerY - radius - 10, 8, radius * 2 + 20);
+                    
+                    // Circular platform base
+                    bg.fillStyle(0x451a03);
+                    bg.fillRect(cx - radius - 5, centerY + radius - 5, radius * 2 + 10, 8);
+                    
+                    // Book compartments arranged in circle (8 segments)
+                    const bookColors = [0x7f1d1d, 0x1e3a5f, 0x14532d, 0x4c1d95, 0x713f12, 0x831843, 0x0f766e, 0x9f1239];
+                    for (let angle = 0; angle < 8; angle++) {
+                        const rad = (angle * Math.PI * 2) / 8;
+                        const bx = cx + Math.cos(rad) * (radius - 8);
+                        const by = centerY + Math.sin(rad) * (radius - 8);
+                        
+                        // Book slot
+                        bg.fillStyle(bookColors[angle]);
+                        bg.fillRect(bx - 6, by - 10, 12, 20);
+                        
+                        // Gold spine detail
+                        bg.fillStyle(0xfbbf24, 0.5);
+                        bg.fillRect(bx - 1, by - 8, 2, 16);
+                    }
+                    
+                    // Outer ring
+                    bg.fillStyle(0x92400e, 0.6);
+                    // Draw ring as segments
+                    for (let a = 0; a < 16; a++) {
+                        const rad = (a * Math.PI * 2) / 16;
+                        const rx = cx + Math.cos(rad) * radius;
+                        const ry = centerY + Math.sin(rad) * radius;
+                        bg.fillRect(rx - 2, ry - 2, 4, 4);
+                    }
+                }
+                
+                // Floating magical green particles
+                bg.fillStyle(0x4ade80, 0.5);
+                for (let i = 0; i < 15; i++) {
+                    const px = startX + 20 + Math.random() * (sectionWidth - 40);
+                    const py = 15 + Math.random() * 50;
+                    bg.fillRect(px, py, 2, 2);
+                }
+                
+                // Floor detail - ornate tiles
+                bg.fillStyle(0x1c1917);
+                bg.fillRect(startX, bgHeight - 20, sectionWidth, 4);
+                bg.fillStyle(0x22c55e, 0.2);
+                for (let fx = startX; fx < endX; fx += 20) {
+                    bg.fillRect(fx + 8, bgHeight - 19, 4, 2);
+                }
+                
+            } else if (sectionType === 'yellowBrick') {
+                // Yellow brick road - Emerald City skyline in distance, poppy fields
+                
+                // Gradient night sky (dark blue to purple)
+                bg.fillStyle(0x0f172a); // Night sky base
+                bg.fillRect(startX, 0, sectionWidth, bgHeight - 16);
+                bg.fillStyle(0x1e1b4b, 0.4); // Purple tint at horizon
+                bg.fillRect(startX, 60, sectionWidth, bgHeight - 76);
+                
+                // Rolling hills with poppies (red flowers in Oz!)
+                bg.fillStyle(0x14532d); // Dark green hills
+                for (let hx = startX; hx < endX; hx += 100) {
+                    bg.fillRect(hx, bgHeight - 45, 120, 30);
+                }
+                
+                // Emerald City in distance - repeating across section
+                const citySpacing = 200;
+                for (let cityX = startX + 50; cityX < endX - 50; cityX += citySpacing) {
+                    bg.fillStyle(0x166534);
+                    // Main palace tower
+                    bg.fillRect(cityX + 30, 35, 25, 120);
+                    // Spire
+                    bg.fillStyle(0x22c55e);
+                    bg.fillRect(cityX + 38, 20, 9, 20);
+                    // Side towers
+                    bg.fillStyle(0x166534);
+                    bg.fillRect(cityX, 55, 15, 100);
+                    bg.fillRect(cityX + 65, 50, 18, 105);
+                    bg.fillRect(cityX + 90, 65, 12, 90);
+                    
+                    // Glowing windows
+                    bg.fillStyle(0x4ade80, 0.7);
+                    bg.fillRect(cityX + 35, 50, 8, 10);
+                    bg.fillRect(cityX + 35, 70, 8, 10);
+                    bg.fillRect(cityX + 35, 90, 8, 10);
+                    bg.fillRect(cityX + 5, 75, 5, 6);
+                    bg.fillRect(cityX + 70, 70, 6, 8);
+                }
+                
+                // Scattered poppies (red flowers)
+                bg.fillStyle(0xdc2626);
+                for (let i = 0; i < Math.floor(sectionWidth / 20); i++) {
+                    const fx = startX + 10 + Math.random() * (sectionWidth - 20);
+                    const fy = bgHeight - 35 + Math.random() * 15;
+                    bg.fillRect(fx, fy, 3, 3);
+                }
+                
+                // Stars in sky
+                bg.fillStyle(0xfbbf24, 0.6);
+                for (let i = 0; i < Math.floor(sectionWidth / 15); i++) {
+                    const sx = startX + Math.random() * sectionWidth;
+                    const sy = 5 + Math.random() * 35;
+                    bg.fillRect(sx, sy, 2, 2);
+                }
+                
+                // Moon
+                const moonX = startX + sectionWidth / 2;
+                bg.fillStyle(0xfef3c7, 0.8);
+                bg.fillCircle(moonX, 25, 12);
+                bg.fillStyle(0x22c55e, 0.2); // Green tint on moon
+                bg.fillCircle(moonX, 25, 10);
+                
+            } else if (sectionType === 'dormitory') {
+                // Galinda & Elphaba's Dormitory - the iconic contrast!
+                
+                // Base wall - elegant wallpaper
+                bg.fillStyle(0x1e293b);
+                bg.fillRect(startX, 0, sectionWidth, bgHeight - 16);
+                
+                // Galinda's side - VERY pink (most of the room!)
+                bg.fillStyle(0x9d174d, 0.3);
+                bg.fillRect(startX, 0, sectionWidth * 0.7, bgHeight - 16);
+                
+                // Elphaba's tiny corner - dark green
+                bg.fillStyle(0x14532d, 0.3);
+                bg.fillRect(startX + sectionWidth * 0.7, 0, sectionWidth * 0.3, bgHeight - 16);
+                
+                // Invisible dividing line (tension!)
+                bg.fillStyle(0x374151, 0.5);
+                bg.fillRect(startX + sectionWidth * 0.7, 0, 2, bgHeight - 16);
+                
+                // GALINDA'S SIDE - Excessive luggage and clothes everywhere!
+                
+                // Pink canopy bed with frills
+                bg.fillStyle(0xfda4af);
+                bg.fillRect(startX + 20, bgHeight - 60, 70, 40);
+                bg.fillStyle(0xfb7185);
+                bg.fillRect(startX + 20, bgHeight - 75, 70, 8); // Canopy
+                bg.fillRect(startX + 20, bgHeight - 75, 5, 55); // Left post
+                bg.fillRect(startX + 85, bgHeight - 75, 5, 55); // Right post
+                // Frilly details
+                bg.fillStyle(0xfce7f3);
+                for (let f = 0; f < 6; f++) {
+                    bg.fillRect(startX + 25 + f * 10, bgHeight - 73, 8, 3);
+                }
+                
+                // Stacks of pink luggage/trunks
+                bg.fillStyle(0xec4899); // Hot pink trunk 1
+                bg.fillRect(startX + 100, bgHeight - 50, 25, 30);
+                bg.fillStyle(0xf472b6); // Lighter pink trunk 2
+                bg.fillRect(startX + 100, bgHeight - 75, 22, 22);
+                bg.fillStyle(0xfbbf24); // Gold clasps
+                bg.fillRect(startX + 108, bgHeight - 45, 8, 3);
+                bg.fillRect(startX + 108, bgHeight - 70, 6, 2);
+                
+                // More luggage scattered
+                bg.fillStyle(0xdb2777);
+                bg.fillRect(startX + 135, bgHeight - 40, 20, 20);
+                bg.fillStyle(0xf9a8d4);
+                bg.fillRect(startX + 160, bgHeight - 55, 30, 35);
+                
+                // Vanity with mirror
+                bg.fillStyle(0xfbbf24);
+                bg.fillRect(startX + 55, 35, 35, 50);
+                bg.fillStyle(0xfef3c7, 0.6); // Mirror
+                bg.fillRect(startX + 60, 40, 25, 35);
+                
+                // Clothes hanging/draped (dresses!)
+                bg.fillStyle(0xf472b6);
+                bg.fillRect(startX + 10, 50, 15, 40); // Dress 1
+                bg.fillRect(startX + 30, 45, 12, 35); // Dress 2
+                bg.fillStyle(0xfce7f3);
+                bg.fillRect(startX + 95, 55, 10, 30); // White dress
+                
+                // Shoes scattered on floor
+                bg.fillStyle(0xec4899);
+                bg.fillRect(startX + 45, bgHeight - 25, 8, 5);
+                bg.fillRect(startX + 130, bgHeight - 22, 6, 4);
+                bg.fillRect(startX + 150, bgHeight - 24, 7, 5);
+                
+                // ELPHABA'S SIDE - Sparse and simple
+                
+                // Simple bed with green blanket
+                const elphabaX = startX + sectionWidth * 0.7 + 10;
+                bg.fillStyle(0x22c55e);
+                bg.fillRect(elphabaX + 10, bgHeight - 50, 45, 30);
+                bg.fillStyle(0x166534);
+                bg.fillRect(elphabaX + 10, bgHeight - 58, 10, 38); // Headboard
+                
+                // Stack of books (her only possessions)
+                bg.fillStyle(0x78350f);
+                bg.fillRect(elphabaX + 60, bgHeight - 55, 15, 35);
+                bg.fillStyle(0x14532d);
+                bg.fillRect(elphabaX + 62, bgHeight - 50, 11, 6);
+                bg.fillStyle(0x1e3a5f);
+                bg.fillRect(elphabaX + 62, bgHeight - 42, 11, 6);
+                bg.fillStyle(0x4c1d95);
+                bg.fillRect(elphabaX + 62, bgHeight - 34, 11, 6);
+                
+                // Single window
+                const windowY = 25;
+                bg.fillStyle(0x0f172a);
+                bg.fillRect(startX + sectionWidth / 2 - 20, windowY, 40, 50);
+                bg.fillStyle(0x1e40af, 0.4); // Moonlight
+                bg.fillRect(startX + sectionWidth / 2 - 16, windowY + 4, 32, 42);
+                
+                // Ceiling with pink chandelier (Galinda's touch)
+                bg.fillStyle(0xfbbf24, 0.7);
+                bg.fillRect(startX + sectionWidth / 3, 8, 25, 12);
+                bg.fillStyle(0xec4899, 0.5);
+                bg.fillRect(startX + sectionWidth / 3 + 3, 20, 19, 8);
+                bg.fillRect(startX + sectionWidth / 2 - 15, 18, 30, 20);
+                
+            } else if (sectionType === 'classroom') {
+                // Dr. Dillamond's Classroom - where animals learned before the ban
+                
+                // Dark wood-paneled walls
+                bg.fillStyle(0x1c1917);
+                bg.fillRect(startX, 0, sectionWidth, bgHeight - 16);
+                
+                // Wood paneling texture
+                bg.fillStyle(0x292524, 0.5);
+                for (let px = startX; px < endX; px += 30) {
+                    bg.fillRect(px, 0, 2, bgHeight - 16);
+                }
+                
+                // Grand chalkboard spanning most of the wall
+                const chalkboardWidth = Math.min(sectionWidth - 60, 200);
+                bg.fillStyle(0x451a03); // Wood frame
+                bg.fillRect(startX + 20, 15, chalkboardWidth + 10, 70);
+                bg.fillStyle(0x14532d); // Dark green chalkboard
+                bg.fillRect(startX + 25, 20, chalkboardWidth, 60);
+                
+                // Chalk writing - "Animals Should Be Seen AND Heard"
+                bg.fillStyle(0xfafafa, 0.8);
+                // Line 1
+                for (let i = 0; i < 6; i++) {
+                    bg.fillRect(startX + 35 + i * 28, 30, 22, 3);
+                }
+                // Line 2
+                for (let i = 0; i < 5; i++) {
+                    bg.fillRect(startX + 40 + i * 30, 42, 25, 3);
+                }
+                // Dr. Dillamond's signature mark (goat hoof print)
+                bg.fillRect(startX + chalkboardWidth - 10, 55, 8, 8);
+                bg.fillRect(startX + chalkboardWidth - 5, 63, 4, 4);
+                
+                // Windows with iron bars (ominous foreshadowing)
+                const numWindows = Math.floor(sectionWidth / 100);
+                for (let w = 0; w < numWindows; w++) {
+                    const wx = startX + 60 + w * 100 + chalkboardWidth / 2;
+                    if (wx < endX - 40) {
+                        bg.fillStyle(0x0f172a);
+                        bg.fillRect(wx, 20, 30, 50);
+                        bg.fillStyle(0x1e40af, 0.3);
+                        bg.fillRect(wx + 2, 22, 26, 46);
+                        // Iron bars
+                        bg.fillStyle(0x374151);
+                        bg.fillRect(wx + 10, 20, 2, 50);
+                        bg.fillRect(wx + 20, 20, 2, 50);
+                    }
+                }
+                
+                // Rows of student desks
+                bg.fillStyle(0x78350f);
+                const deskRows = 2;
+                const desksPerRow = Math.floor(sectionWidth / 60);
+                for (let row = 0; row < deskRows; row++) {
+                    for (let col = 0; col < desksPerRow; col++) {
+                        const dx = startX + 25 + col * 60;
+                        const dy = bgHeight - 60 + row * 25;
+                        if (dx < endX - 50) {
+                            bg.fillRect(dx, dy, 45, 18);
+                            // Chair back
+                            bg.fillStyle(0x5c3d1e);
+                            bg.fillRect(dx + 15, dy - 8, 15, 8);
+                            bg.fillStyle(0x78350f);
+                        }
+                    }
+                }
+                
+                // Lectern for Dr. Dillamond
+                bg.fillStyle(0x451a03);
+                bg.fillRect(startX + 10, bgHeight - 70, 25, 50);
+                bg.fillStyle(0x78350f);
+                bg.fillRect(startX + 8, bgHeight - 75, 29, 8);
+                
+                // Candelabras for old-world atmosphere
+                bg.fillStyle(0xfbbf24, 0.7);
+                bg.fillRect(startX + 8, 10, 5, 10);
+                bg.fillRect(startX + sectionWidth - 15, 10, 5, 10);
+                // Candle flames
+                bg.fillStyle(0xfef3c7, 0.5);
+                bg.fillRect(startX + 9, 5, 3, 5);
+                bg.fillRect(startX + sectionWidth - 14, 5, 3, 5);
+            }
+            
+            bg.setScrollFactor(0.3, 1); // Parallax
+            this.backgroundElements.push(bg);
+        }
+        
+        // Add overall sky gradient behind everything
+        const sky = this.add.graphics();
+        sky.fillStyle(0x0f172a); // Dark base
+        sky.fillRect(0, 0, WORLD_WIDTH, bgHeight);
+        sky.setScrollFactor(0, 0);
+        sky.setDepth(-10);
+        this.backgroundElements.push(sky);
+    }
+    
     private createFinishLine(): void {
         // Place finish line near the end of the level
         const finishY = WORLD_HEIGHT - 16 - 24; // Position above ground (48px sprite, anchored at center)
@@ -1210,13 +2244,17 @@ export class MultiplayerGameScene extends Phaser.Scene {
         // Celebration effect - flash the screen
         this.cameras.main.flash(500, 255, 215, 0); // Gold flash
 
+        // Check if there's another level
+        const isLastLevel = this.currentLevel >= LEVELS.length - 1;
+        const message = isLastLevel ? 'YOU WIN!' : 'LEVEL COMPLETE!';
+
         // Show victory text - position relative to viewport (scrollFactor 0)
         this.victoryText = this.add.text(
             GAME_WIDTH / 2,
             GAME_HEIGHT / 2 - 20,
-            'FINISH!',
+            message,
             {
-                fontSize: '24px',
+                fontSize: '20px',
                 color: '#fbbf24',
                 backgroundColor: '#1f2937',
                 padding: { x: 12, y: 6 },
@@ -1240,6 +2278,13 @@ export class MultiplayerGameScene extends Phaser.Scene {
 
         // Create confetti particles
         this.createConfetti();
+
+        // Progress to next level after delay (if not last level)
+        if (!isLastLevel) {
+            this.time.delayedCall(2000, () => {
+                this.nextLevel();
+            });
+        }
     }
 
     private handleLavaDeath(): void {
@@ -1285,46 +2330,192 @@ export class MultiplayerGameScene extends Phaser.Scene {
         }
     }
 
+    private loadLevel(levelIndex: number): void {
+        const level = LEVELS[levelIndex];
+        if (!level) {
+            console.error(`Level ${levelIndex} not found!`);
+            return;
+        }
+
+        // Clear existing level elements
+        this.ground.clear(true, true);
+        this.lava.clear(true, true);
+        if (this.finishLine) {
+            this.finishLine.destroy();
+        }
+
+        // Update background for the level's theme
+        this.createBackground(level.theme || 'default');
+
+        // Update spawn and finish positions from level config
+        this.spawnX = level.spawnX;
+        this.spawnY = level.spawnY;
+        this.finishLineX = level.finishX;
+
+        const tileSize = 16;
+        const groundY = WORLD_HEIGHT - tileSize / 2;
+
+        // Helper to get hazard type at position
+        const getHazardAt = (x: number): string | null => {
+            for (const [start, end, hazardType] of level.hazards) {
+                if (x >= start && x <= end) {
+                    return hazardType;
+                }
+            }
+            return null;
+        };
+
+        // Helper to get ground type at position (for themed levels)
+        const getGroundTypeAt = (x: number): string => {
+            if (level.groundSections) {
+                for (const [start, end, groundType] of level.groundSections) {
+                    if (x >= start && x <= end) {
+                        return groundType;
+                    }
+                }
+            }
+            return 'ground'; // Default ground type
+        };
+
+        // Create ground or hazards based on position
+        for (let x = tileSize / 2; x < WORLD_WIDTH; x += tileSize) {
+            const hazard = getHazardAt(x);
+            if (hazard) {
+                // Create hazard tile
+                const hazardTile = hazard === 'lava' ? 'lava' : 
+                                   hazard === 'void' ? 'void' : 
+                                   hazard === 'spikes' ? 'spikes' : 'lava';
+                this.lava.create(x, groundY, hazardTile);
+            } else {
+                // Create themed ground tile
+                const groundType = getGroundTypeAt(x);
+                this.ground.create(x, groundY, groundType);
+            }
+        }
+
+        // Create platforms from level config
+        for (const platform of level.platforms) {
+            const [x, y, widthTiles, tileType] = platform;
+            const platformTile = tileType || 'platform';
+            for (let i = 0; i < widthTiles; i++) {
+                this.ground.create(x + i * 16, y, platformTile);
+            }
+        }
+
+        // Create finish line
+        this.createFinishLine();
+
+        // Update level text
+        this.updateLevelDisplay();
+    }
+
+    private updateLevelDisplay(): void {
+        const level = LEVELS[this.currentLevel];
+        const displayText = level?.name || `Level ${this.currentLevel + 1}`;
+        
+        if (this.levelText) {
+            this.levelText.setText(displayText);
+        } else {
+            this.levelText = this.add.text(
+                8,
+                8,
+                displayText,
+                {
+                    fontSize: '8px',
+                    color: '#fbbf24',
+                    backgroundColor: '#1f293780',
+                    padding: { x: 4, y: 2 },
+                },
+            );
+            this.levelText.setScrollFactor(0);
+            this.levelText.setDepth(100);
+        }
+    }
+
+    private nextLevel(): void {
+        if (this.currentLevel < LEVELS.length - 1) {
+            this.currentLevel++;
+            this.hasFinished = false;
+            
+            // Clean up victory text if present
+            if (this.victoryText) {
+                this.victoryText.destroy();
+                this.victoryText = undefined;
+            }
+            
+            // Load the next level
+            this.loadLevel(this.currentLevel);
+            
+            // Reset player position
+            this.player.setPosition(this.spawnX, this.spawnY);
+            this.player.setVelocity(0, 0);
+            
+            // Re-add colliders (they get cleared when groups are cleared)
+            this.physics.add.collider(this.player, this.ground);
+            this.physics.add.overlap(this.player, this.lava, () => {
+                this.handleLavaDeath();
+            });
+            this.physics.add.overlap(this.player, this.finishLine, () => {
+                this.handleFinishLine();
+            });
+            
+            // Brief flash to indicate level change
+            this.cameras.main.flash(300, 100, 200, 255);
+        } else {
+            // All levels complete - show game complete message
+            this.showGameComplete();
+        }
+    }
+
+    private showGameComplete(): void {
+        if (this.victoryText) {
+            this.victoryText.setText('ALL LEVELS COMPLETE!');
+        }
+    }
+
+    private selectLevel(levelIndex: number): void {
+        if (levelIndex < 0 || levelIndex >= LEVELS.length) return;
+
+        // Clean up any victory text
+        if (this.victoryText) {
+            this.victoryText.destroy();
+            this.victoryText = undefined;
+        }
+
+        // Reset finished state
+        this.hasFinished = false;
+        
+        // Set and load the new level
+        this.currentLevel = levelIndex;
+        this.loadLevel(this.currentLevel);
+
+        // Reset player position
+        this.player.setPosition(this.spawnX, this.spawnY);
+        this.player.setVelocity(0, 0);
+
+        // Re-add colliders
+        this.physics.add.collider(this.player, this.ground);
+        this.physics.add.overlap(this.player, this.lava, () => {
+            this.handleLavaDeath();
+        });
+        this.physics.add.overlap(this.player, this.finishLine, () => {
+            this.handleFinishLine();
+        });
+
+        // Flash to indicate level change
+        this.cameras.main.flash(300, 100, 200, 255);
+    }
+
     create(): void {
         // Set up larger world bounds for scrolling
         this.physics.world.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
         
-        // Create parallax background layers
-        this.createBackground();
-        
-        // Create ground and lava
+        // Initialize physics groups
         this.ground = this.physics.add.staticGroup();
         this.lava = this.physics.add.staticGroup();
-        const tileSize = 16;
-        const groundY = WORLD_HEIGHT - tileSize / 2;
-
-        // Define lava pit ranges [startX, endX] - player must use platforms to cross
-        const lavaPits = [
-            [160, 320],   // After first safe section, before section 1 platforms
-            [400, 520],   // Section 2 area - staircase challenge
-            [600, 720],   // Section 3 area - high platform challenge
-            [820, 900],   // Final challenge before finish
-        ];
-
-        // Helper to check if position is in a lava pit
-        const isLavaPit = (x: number) => {
-            return lavaPits.some(([start, end]) => x >= start && x <= end);
-        };
-
-        // Create ground or lava based on position
-        for (let x = tileSize / 2; x < WORLD_WIDTH; x += tileSize) {
-            if (isLavaPit(x)) {
-                this.lava.create(x, groundY, 'lava');
-            } else {
-                this.ground.create(x, groundY, 'ground');
-            }
-        }
         
-        // Add floating platforms throughout the level
-        this.createPlatforms();
-
-        // Create finish line at the end of the level
-        this.createFinishLine();
+        // Load the current level (this also creates the themed background)
+        this.loadLevel(this.currentLevel);
 
         // Create local player with selected costume (spawn near start)
         this.player = this.physics.add.sprite(
@@ -1391,6 +2582,8 @@ export class MultiplayerGameScene extends Phaser.Scene {
                 D: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D),
                 SPACE: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE),
             };
+            
+            // Number keys for level selection (1-9)
         }
 
         this.player.anims.play(`idle_${this.playerCostume}`);
@@ -1400,13 +2593,15 @@ export class MultiplayerGameScene extends Phaser.Scene {
         this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
         this.cameras.main.setDeadzone(50, 30); // Small deadzone for smoother feel
 
-        // Listen for other players' movements
+        // Listen for other players' movements (multiplayer only)
+        if (!this.isPractice) {
         this.setupWebSocketListeners();
 
         // Send initial position so other players can see us
         this.time.delayedCall(500, () => {
             this.sendPosition('idle');
         });
+        }
     }
 
 
@@ -1481,6 +2676,7 @@ export class MultiplayerGameScene extends Phaser.Scene {
     }
 
     update(time: number): void {
+
         const speed = 100;
 
         // Handle local player movement (keyboard + touch)
@@ -1524,6 +2720,8 @@ export class MultiplayerGameScene extends Phaser.Scene {
         // Update name label position
         this.playerNameText.setPosition(this.player.x, this.player.y - 12);
 
+        // Multiplayer position sync (skip in practice mode)
+        if (!this.isPractice) {
         // Send position to server at intervals
         if (time - this.lastSendTime > this.sendInterval) {
             const posChanged =
@@ -1555,6 +2753,7 @@ export class MultiplayerGameScene extends Phaser.Scene {
                 remote.nameText.setPosition(remote.sprite.x, remote.sprite.y - 12);
             }
         });
+        }
     }
 
     private sendPosition(animation: string): void {

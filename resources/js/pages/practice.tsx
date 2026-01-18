@@ -1,7 +1,8 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 
 import MultiplayerGameCanvas from '@/components/multiplayer-game-canvas';
+import { LEVEL_INFO } from '@/game/levels';
 import { type SharedData } from '@/types';
 
 // Ensure touchControls exists
@@ -9,60 +10,19 @@ if (typeof window !== 'undefined') {
     window.touchControls = window.touchControls || { left: false, right: false, jump: false };
 }
 
-interface Room {
-    id: number;
-    code: string;
-    name: string;
-    status: string;
-    max_players: number;
-}
-
 interface Props {
-    room: Room;
-    isHost: boolean;
     playerCostume: number;
-    startLevel?: number;
+    startLevel: number;
 }
 
-interface Player {
-    id: number;
-    name: string;
-}
-
-export default function Game({ room, isHost, playerCostume, startLevel = 0 }: Props) {
+export default function Practice({ playerCostume, startLevel }: Props) {
     const { auth } = usePage<SharedData>().props;
-    const [players, setPlayers] = useState<Player[]>([]);
-    const [isConnected, setIsConnected] = useState(false);
-    const channelRef = useRef<ReturnType<typeof window.Echo.join> | null>(null);
+    const levelInfo = LEVEL_INFO[startLevel] || LEVEL_INFO[0];
     
     // Touch control state
     const [leftPressed, setLeftPressed] = useState(false);
     const [rightPressed, setRightPressed] = useState(false);
     const [jumpPressed, setJumpPressed] = useState(false);
-
-    useEffect(() => {
-        // Join the presence channel for this game room
-        channelRef.current = window.Echo.join(`game.${room.id}`)
-            .here((users: Player[]) => {
-                setPlayers(users);
-                setIsConnected(true);
-            })
-            .joining((user: Player) => {
-                setPlayers((prev) => [...prev, user]);
-            })
-            .leaving((user: Player) => {
-                setPlayers((prev) => prev.filter((p) => p.id !== user.id));
-            })
-            .error((error: unknown) => {
-                console.error('Channel error:', error);
-            });
-
-        return () => {
-            if (channelRef.current) {
-                window.Echo.leave(`game.${room.id}`);
-            }
-        };
-    }, [room.id]);
 
     // Touch control handlers
     const handleLeftDown = () => {
@@ -92,7 +52,7 @@ export default function Game({ room, isHost, playerCostume, startLevel = 0 }: Pr
 
     return (
         <>
-            <Head title={`Game: ${room.name}`}>
+            <Head title={`Practice: ${levelInfo.name}`}>
                 <link rel="preconnect" href="https://fonts.bunny.net" />
                 <link
                     href="https://fonts.bunny.net/css?family=silkscreen:400,700"
@@ -123,32 +83,19 @@ export default function Game({ room, isHost, playerCostume, startLevel = 0 }: Pr
                                 textShadow: '2px 2px 0 #7c3aed',
                             }}
                         >
-                            {room.name}
+                            {levelInfo.name}
                         </h1>
                         <span
-                            className="border-2 border-purple-500 bg-purple-500/20 px-3 py-1 font-mono text-sm text-purple-400"
+                            className="border-2 border-orange-500 bg-orange-500/20 px-3 py-1 font-mono text-sm text-orange-400"
                         >
-                            {room.code}
+                            PRACTICE
                         </span>
                     </div>
 
-                    {/* Players list */}
+                    {/* Solo indicator */}
                     <div className="flex items-center gap-2 text-sm">
-                        <span className={`h-2 w-2 rounded-full ${isConnected ? 'bg-green-400' : 'bg-red-400'}`} />
-                        <span className="text-gray-400">
-                            {players.length} / {room.max_players}
-                        </span>
-                        <div className="flex -space-x-1">
-                            {players.slice(0, 4).map((player) => (
-                                <div
-                                    key={player.id}
-                                    className="flex h-6 w-6 items-center justify-center border border-gray-600 bg-gray-800 text-xs text-white"
-                                    title={player.name}
-                                >
-                                    {player.name.charAt(0).toUpperCase()}
-                                </div>
-                            ))}
-                        </div>
+                        <span className="h-2 w-2 rounded-full bg-green-400" />
+                        <span className="text-gray-400">Solo Mode</span>
                     </div>
                 </div>
 
@@ -159,32 +106,15 @@ export default function Game({ room, isHost, playerCostume, startLevel = 0 }: Pr
                         boxShadow: '6px 6px 0 #7c3aed, 12px 12px 0 rgba(0,0,0,0.3)',
                     }}
                 >
-                    {!isConnected ? (
-                        <div className="text-center text-yellow-400">
-                            <div className="mb-4 text-2xl">CONNECTING...</div>
-                            <div className="flex justify-center gap-2">
-                                {[0, 1, 2].map((i) => (
-                                    <div
-                                        key={i}
-                                        className="h-4 w-4 bg-yellow-400"
-                                        style={{
-                                            animation: 'bounce 0.6s ease-in-out infinite',
-                                            animationDelay: `${i * 0.1}s`,
-                                        }}
-                                    />
-                                ))}
-                            </div>
-                        </div>
-                    ) : (
-                        <MultiplayerGameCanvas
-                            roomId={room.id}
-                            playerId={auth.user!.id}
-                            playerName={auth.user!.name}
-                            playerCostume={playerCostume}
-                            startLevel={startLevel}
-                            className="h-full w-full"
-                        />
-                    )}
+                    <MultiplayerGameCanvas
+                        roomId={0}
+                        playerId={auth.user!.id}
+                        playerName={auth.user!.name}
+                        playerCostume={playerCostume}
+                        startLevel={startLevel}
+                        isPractice={true}
+                        className="h-full w-full"
+                    />
                 </div>
 
                 {/* Controls hint */}
@@ -196,9 +126,6 @@ export default function Game({ room, isHost, playerCostume, startLevel = 0 }: Pr
                     <span>
                         <kbd className="border border-gray-600 bg-gray-800 px-1 text-white">SPACE</kbd> Jump
                     </span>
-                    {isHost && (
-                        <span className="text-purple-400">You are the host</span>
-                    )}
                 </div>
             </div>
 
@@ -249,13 +176,6 @@ export default function Game({ room, isHost, playerCostume, startLevel = 0 }: Pr
                     </span>
                 </button>
             </div>
-
-            <style>{`
-                @keyframes bounce {
-                    0%, 100% { transform: translateY(0); }
-                    50% { transform: translateY(-8px); }
-                }
-            `}</style>
         </>
     );
 }

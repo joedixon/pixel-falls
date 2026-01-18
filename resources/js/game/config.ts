@@ -6,7 +6,7 @@ export const GAME_WIDTH = 320;
 export const GAME_HEIGHT = 180;
 
 // World dimensions - larger than viewport for scrolling
-export const WORLD_WIDTH = 960; // 3x wider than viewport
+export const WORLD_WIDTH = 1600; // 5x wider than viewport for longer levels
 export const WORLD_HEIGHT = 180; // Keep same height for horizontal scrolling
 
 export const gameConfig: Phaser.Types.Core.GameConfig = {
