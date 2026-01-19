@@ -128,32 +128,32 @@ const LEVELS: LevelConfig[] = [
     {
         name: 'Level 1',
         platforms: [
-            // Section 1 - Stepping stones
-            [180, 140, 3],
-            [280, 120, 2],
-            [380, 100, 3],
-            // Section 2 - Staircase up
-            [520, 140, 2],
-            [580, 120, 2],
-            [640, 100, 2],
-            // Section 3 - High platforms
-            [780, 80, 4],
-            [880, 100, 2],
-            [960, 120, 3],
-            // Section 4 - More challenges
-            [1100, 100, 3],
-            [1200, 80, 4],
-            [1300, 100, 3],
+            // Section 1 - Easy intro platforms
+            [150, 140, 3],
+            [250, 120, 3],
+            [350, 100, 3],
+            // Section 2 - Help over first lava
+            [420, 120, 3],  // Platform over lava
+            [550, 130, 3],
+            // Section 3 - Stepping stones
+            [700, 130, 2],
+            [780, 110, 3],
+            [880, 100, 3],
+            // Section 4 - Help over second lava
+            [970, 110, 3],  // Platform over lava
+            [1100, 130, 3],
             // Section 5 - Final stretch
-            [1400, 80, 4],
-            [1480, 100, 3],
+            [1220, 120, 3],
+            [1350, 100, 4],
+            [1480, 130, 3],
         ],
         hazards: [
-            [200, 420, 'lava'],
-            [540, 700, 'lava'],
-            [800, 1000, 'lava'],
-            [1120, 1280, 'lava'],
-            [1420, 1520, 'lava'],
+            // Narrower lava pits - all 50 pixels (easily jumpable)
+            [400, 450, 'lava'],   // 50 wide
+            [620, 670, 'lava'],   // 50 wide
+            [940, 990, 'lava'],   // 50 wide
+            [1180, 1230, 'lava'], // 50 wide
+            [1440, 1490, 'lava'], // 50 wide
         ],
         spawnX: 64,
         spawnY: WORLD_HEIGHT - 40,
@@ -164,67 +164,51 @@ const LEVELS: LevelConfig[] = [
         name: 'Level 2: Wicked',
         theme: 'wicked',
         groundSections: [
-            // The Grand Library of Shiz University
-            [0, 350, 'library'],
-            // Yellow brick road to dormitory - watch for gaps!
-            [350, 420, 'yellowBrick'],
-            [450, 530, 'yellowBrick'],
-            [560, 650, 'yellowBrick'],
+            // The Grand Library of Shiz University - long intro area
+            [0, 400, 'library'],
+            // Yellow brick road to dormitory - jumpable gaps
+            [400, 480, 'yellowBrick'],
+            [520, 620, 'yellowBrick'],
             // Galinda & Elphaba's Dormitory
-            [650, 900, 'dormitory'],
-            // Yellow brick road to classroom - treacherous path!
-            [900, 980, 'yellowBrick'],
-            [1020, 1100, 'yellowBrick'],
-            [1140, 1220, 'yellowBrick'],
-            [1260, 1300, 'yellowBrick'],
-            // Dr. Dillamond's Classroom
-            [1300, 1600, 'classroom'],
+            [620, 950, 'dormitory'],
+            // Yellow brick road to classroom - slightly harder gaps
+            [950, 1040, 'yellowBrick'],
+            [1080, 1180, 'yellowBrick'],
+            // Dr. Dillamond's Classroom - victory stretch
+            [1180, 1600, 'classroom'],
         ],
         platforms: [
-            // Library - tight carousel gauntlet
-            [60, 130, 2, 'carousel'],
-            [120, 100, 2, 'carousel'],
-            [180, 70, 2, 'carousel'],
-            [250, 100, 2, 'carousel'],
-            [310, 130, 2, 'carousel'],
+            // Library - spinning bookshelf obstacles (optional height bonuses)
+            [100, 130, 2, 'carousel'],
+            [200, 100, 2, 'carousel'],
+            [300, 130, 2, 'carousel'],
             
-            // Yellow brick road 1 - required emerald platforms over voids
-            [425, 120, 2, 'emerald'],  // Over first gap
-            [535, 100, 2, 'emerald'],  // Over second gap
+            // Yellow brick road 1 - helpful stepping stones (gaps are jumpable without)
+            [490, 130, 2, 'emerald'],  // Helpful midpoint
             
-            // Dormitory - Galinda's luggage obstacles!
-            [680, 140, 2, 'luggage'],
-            [740, 110, 2, 'luggage'],
-            [800, 80, 2, 'luggage'],
-            [860, 110, 2, 'luggage'],
+            // Dormitory - Galinda's luggage creates fun obstacle course
+            [680, 130, 2, 'luggage'],
+            [760, 100, 2, 'luggage'],
+            [840, 130, 2, 'luggage'],
+            [900, 100, 2, 'luggage'],
             
-            // Yellow brick road 2 - trickier emerald jumps over voids
-            [985, 110, 2, 'emerald'],  // Over gap
-            [1105, 90, 2, 'emerald'],  // Over gap
-            [1225, 100, 2, 'emerald'], // Over gap
+            // Yellow brick road 2 - emerald stepping stone
+            [1050, 120, 2, 'emerald'],
             
-            // Dr. Dillamond's Classroom - desk obstacle course
-            [1340, 140, 2, 'desk'],
-            [1400, 110, 2, 'desk'],
-            [1460, 80, 2, 'desk'],
-            [1520, 110, 2, 'desk'],
-            [1560, 140, 2, 'desk'],
+            // Dr. Dillamond's Classroom - celebratory desk jumps
+            [1250, 130, 3, 'desk'],
+            [1350, 100, 3, 'desk'],
+            [1450, 130, 3, 'desk'],
         ],
         hazards: [
-            // Void gaps on yellow brick roads (fall = reset!)
-            [420, 450, 'void'],  // Gap 1
-            [530, 560, 'void'],  // Gap 2
-            [980, 1020, 'void'], // Gap 3
-            [1100, 1140, 'void'], // Gap 4
-            [1220, 1260, 'void'], // Gap 5
-            // Spikes in the library
-            [100, 115, 'spikes'],
-            [200, 215, 'spikes'],
-            // Spikes in the dormitory
-            [760, 780, 'spikes'],
-            // Spikes in the classroom - Dr. Dillamond's defenses!
-            [1370, 1390, 'spikes'],
-            [1490, 1510, 'spikes'],
+            // Void gaps - all jumpable with running start (40 pixels max)
+            [480, 520, 'void'],  // Gap 1 - 40 wide
+            [1040, 1080, 'void'], // Gap 2 - 40 wide
+            // Decorative spikes - avoidable by jumping
+            [150, 165, 'spikes'],
+            [250, 265, 'spikes'],
+            [720, 740, 'spikes'],
+            [1300, 1320, 'spikes'],
         ],
         spawnX: 32,
         spawnY: WORLD_HEIGHT - 40,
@@ -1868,13 +1852,13 @@ export class MultiplayerGameScene extends Phaser.Scene {
     private createWickedBackground(): void {
         const bgHeight = WORLD_HEIGHT;
         
-        // Define continuous background areas (not fragmented by voids)
+        // Define continuous background areas (matching ground sections)
         const backgroundAreas: [number, number, string][] = [
-            [0, 350, 'library'],
-            [350, 650, 'yellowBrick'],
-            [650, 900, 'dormitory'],
-            [900, 1300, 'yellowBrick'],
-            [1300, 1600, 'classroom'],
+            [0, 400, 'library'],
+            [400, 620, 'yellowBrick'],
+            [620, 950, 'dormitory'],
+            [950, 1180, 'yellowBrick'],
+            [1180, 1600, 'classroom'],
         ];
         
         // Draw section-specific backgrounds
@@ -2244,9 +2228,10 @@ export class MultiplayerGameScene extends Phaser.Scene {
         // Celebration effect - flash the screen
         this.cameras.main.flash(500, 255, 215, 0); // Gold flash
 
-        // Check if there's another level
+        // In practice mode, always show "LEVEL COMPLETE!" and return to lobby
+        // In multiplayer, progress through levels
         const isLastLevel = this.currentLevel >= LEVELS.length - 1;
-        const message = isLastLevel ? 'YOU WIN!' : 'LEVEL COMPLETE!';
+        const message = this.isPractice ? 'LEVEL COMPLETE!' : (isLastLevel ? 'YOU WIN!' : 'LEVEL COMPLETE!');
 
         // Show victory text - position relative to viewport (scrollFactor 0)
         this.victoryText = this.add.text(
@@ -2279,7 +2264,15 @@ export class MultiplayerGameScene extends Phaser.Scene {
         // Create confetti particles
         this.createConfetti();
 
-        // Progress to next level after delay (if not last level)
+        // In practice mode: show celebration then return to lobby
+        if (this.isPractice) {
+            this.time.delayedCall(2500, () => {
+                window.location.href = '/lobby';
+            });
+            return;
+        }
+
+        // In multiplayer: progress to next level after delay (if not last level)
         if (!isLastLevel) {
             this.time.delayedCall(2000, () => {
                 this.nextLevel();
