@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { GAME_HEIGHT, GAME_WIDTH } from '@/game/config';
 import { MultiplayerGameScene } from '@/game/scenes/multiplayer-game-scene';
@@ -36,23 +36,36 @@ export default function MultiplayerGameCanvas({
 }: MultiplayerGameCanvasProps) {
     const gameRef = useRef<Phaser.Game | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
+    const [containerReady, setContainerReady] = useState(false);
 
+    // Wait for container to have dimensions
     useEffect(() => {
-        if (gameRef.current || !containerRef.current) {
+        if (!containerRef.current) return;
+
+        const checkSize = () => {
+            const container = containerRef.current;
+            if (container && container.clientWidth > 0 && container.clientHeight > 0) {
+                setContainerReady(true);
+            }
+        };
+
+        // Check immediately
+        checkSize();
+
+        // Also check on resize in case it takes a moment
+        const resizeObserver = new ResizeObserver(checkSize);
+        resizeObserver.observe(containerRef.current);
+
+        return () => resizeObserver.disconnect();
+    }, []);
+
+    // Initialize Phaser once container is ready
+    useEffect(() => {
+        if (gameRef.current || !containerRef.current || !containerReady) {
             return;
         }
 
         const container = containerRef.current;
-
-        const calculateScale = () => {
-            const containerWidth = container.clientWidth;
-            const containerHeight = container.clientHeight;
-            const scaleX = Math.floor(containerWidth / GAME_WIDTH);
-            const scaleY = Math.floor(containerHeight / GAME_HEIGHT);
-            return Math.max(1, Math.min(scaleX, scaleY));
-        };
-
-        const initialScale = calculateScale();
 
         // Create the multiplayer scene with room info
         const scene = new MultiplayerGameScene(roomId, playerId, playerName, playerCostume, startLevel, isPractice);
@@ -68,11 +81,7 @@ export default function MultiplayerGameCanvas({
             scale: {
                 mode: Phaser.Scale.FIT,
                 autoCenter: Phaser.Scale.CENTER_BOTH,
-                width: GAME_WIDTH,
-                height: GAME_HEIGHT,
-                zoom: initialScale,
-                min: { width: GAME_WIDTH, height: GAME_HEIGHT },
-                max: { width: GAME_WIDTH * 8, height: GAME_HEIGHT * 8 },
+                expandParent: false,
             },
             physics: {
                 default: 'arcade',
@@ -86,10 +95,9 @@ export default function MultiplayerGameCanvas({
 
         gameRef.current = new Phaser.Game(config);
 
+        // Handle resize to refresh Phaser scaling
         const handleResize = () => {
             if (gameRef.current) {
-                const newScale = calculateScale();
-                gameRef.current.scale.setZoom(newScale);
                 gameRef.current.scale.refresh();
             }
         };
@@ -104,13 +112,13 @@ export default function MultiplayerGameCanvas({
                 gameRef.current = null;
             }
         };
-    }, [roomId, playerId, playerName, playerCostume, startLevel, isPractice]);
+    }, [roomId, playerId, playerName, playerCostume, startLevel, isPractice, containerReady]);
 
     return (
         <div
             ref={containerRef}
             id="game-container"
-            className={`flex items-center justify-center ${className}`}
+            className={`${className}`}
             style={{ imageRendering: 'pixelated' }}
         />
     );
