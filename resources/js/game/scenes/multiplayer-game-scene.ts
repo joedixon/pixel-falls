@@ -1852,13 +1852,15 @@ export class MultiplayerGameScene extends Phaser.Scene {
     private createWickedBackground(): void {
         const bgHeight = WORLD_HEIGHT;
         
-        // Define continuous background areas (matching ground sections)
+        // Define continuous background areas (aligned with 16px tile grid)
+        // Ground tiles are centered at 8, 24, 40... so edges fall at 0, 16, 32...
+        // Section boundaries need to match where tiles visually change
         const backgroundAreas: [number, number, string][] = [
-            [0, 400, 'library'],
-            [400, 620, 'yellowBrick'],
-            [620, 950, 'dormitory'],
-            [950, 1180, 'yellowBrick'],
-            [1180, 1600, 'classroom'],
+            [0, 400, 'library'],          // Library tiles: centers 8-392, edges 0-400
+            [400, 624, 'yellowBrick'],    // Yellow brick tiles: 408-472, 528-616 → edges 400-624
+            [624, 944, 'dormitory'],      // Dorm tiles: centers 632-936 → edges 624-944
+            [944, 1184, 'yellowBrick'],   // Yellow brick: 952-1176 → edges 944-1184
+            [1184, 1600, 'classroom'],    // Classroom: 1192+ → edges 1184-1600
         ];
         
         // Draw section-specific backgrounds
@@ -2198,7 +2200,7 @@ export class MultiplayerGameScene extends Phaser.Scene {
                 bg.fillRect(startX + sectionWidth - 14, 5, 3, 5);
             }
             
-            bg.setScrollFactor(0.3, 1); // Parallax
+            bg.setScrollFactor(1, 1); // Fixed to world coordinates - no parallax so backgrounds align with floors
             this.backgroundElements.push(bg);
         }
         
@@ -2206,7 +2208,7 @@ export class MultiplayerGameScene extends Phaser.Scene {
         const sky = this.add.graphics();
         sky.fillStyle(0x0f172a); // Dark base
         sky.fillRect(0, 0, WORLD_WIDTH, bgHeight);
-        sky.setScrollFactor(0, 0);
+        sky.setScrollFactor(1, 1); // Also fixed to world
         sky.setDepth(-10);
         this.backgroundElements.push(sky);
     }

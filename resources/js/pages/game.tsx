@@ -48,7 +48,13 @@ export default function Game({ room, isHost, playerCostume, startLevel = 0 }: Pr
                 setIsConnected(true);
             })
             .joining((user: Player) => {
-                setPlayers((prev) => [...prev, user]);
+                // Only add if not already in the list (prevent duplicates)
+                setPlayers((prev) => {
+                    if (prev.some((p) => p.id === user.id)) {
+                        return prev;
+                    }
+                    return [...prev, user];
+                });
             })
             .leaving((user: Player) => {
                 setPlayers((prev) => prev.filter((p) => p.id !== user.id));
