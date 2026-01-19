@@ -61,17 +61,31 @@ export default function CharacterPreview({ costumeId, size = 64, className = '' 
     }, [costume]);
 
     return (
-        <canvas
-            ref={canvasRef}
-            width={16}
-            height={16}
+        <div
             className={className}
             style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
                 width: size,
                 height: size,
-                imageRendering: 'pixelated',
+                background: 'radial-gradient(circle, #6b7280 0%, #4b5563 100%)',
+                borderRadius: '4px',
+                paddingTop: size * 0.08, // Shift content down slightly since characters are drawn top-heavy
             }}
-        />
+        >
+            <canvas
+                ref={canvasRef}
+                width={16}
+                height={16}
+                style={{
+                    display: 'block',
+                    width: size * 0.8,
+                    height: size * 0.8,
+                    imageRendering: 'pixelated',
+                }}
+            />
+        </div>
     );
 }
 

@@ -139,7 +139,7 @@ export default function Lobby({ rooms, myRooms, currentCostume }: Props) {
                         <div className="flex items-center gap-6">
                             {/* Large preview */}
                             <div className="flex flex-col items-center">
-                                <div className="border-4 border-purple-500 bg-gray-800 p-4">
+                                <div className="border-4 border-purple-500 p-1">
                                     <CharacterPreview costumeId={selectedCostume} size={96} />
                                 </div>
                                 <span className="mt-2 text-sm text-purple-300">
