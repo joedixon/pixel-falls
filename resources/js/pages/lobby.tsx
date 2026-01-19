@@ -1,12 +1,14 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { FormEvent, useState } from 'react';
 
+import { destroy, leaveRoom } from '@/actions/App/Http/Controllers/GameRoomController';
 import CharacterPreview from '@/components/character-preview';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { COSTUMES } from '@/game/costumes';
 import { LEVEL_INFO } from '@/game/levels';
+import { type SharedData } from '@/types';
 
 interface Room {
     id: number;
@@ -21,10 +23,12 @@ interface Room {
 
 interface Props {
     rooms: Room[];
+    myRooms: Room[];
     currentCostume: number;
 }
 
-export default function Lobby({ rooms, currentCostume }: Props) {
+export default function Lobby({ rooms, myRooms, currentCostume }: Props) {
+    const { auth } = usePage<SharedData>().props;
     const [showCreate, setShowCreate] = useState(false);
     const [showJoin, setShowJoin] = useState(false);
     const [showPractice, setShowPractice] = useState(false);
@@ -342,6 +346,65 @@ export default function Lobby({ rooms, currentCostume }: Props) {
                         </div>
                     )}
 
+                    {/* Your rooms */}
+                    {myRooms.length > 0 && (
+                        <div
+                            className="border-4 border-cyan-400 bg-gray-900/90 p-6"
+                            style={{ boxShadow: '6px 6px 0 #0e7490' }}
+                        >
+                            <h2 className="mb-4 text-xl text-cyan-400">YOUR ROOMS</h2>
+                            <div className="space-y-2">
+                                {myRooms.map((room) => {
+                                    const isOwner = auth.user && room.host.id === auth.user.id;
+                                    return (
+                                        <div
+                                            key={room.id}
+                                            className="flex items-center justify-between border-2 border-gray-700 bg-gray-800 p-3 transition-colors hover:border-cyan-400"
+                                        >
+                                            <Link
+                                                href={`/game/${room.code}`}
+                                                className="flex flex-1 items-center justify-between"
+                                            >
+                                                <div>
+                                                    <span className="text-white">{room.name}</span>
+                                                    <span className="ml-2 text-sm text-gray-500">
+                                                        {isOwner ? '(owner)' : `by ${room.host.name}`}
+                                                    </span>
+                                                </div>
+                                                <span className="font-mono text-cyan-400">{room.code}</span>
+                                            </Link>
+                                            {isOwner ? (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        if (confirm('Are you sure you want to delete this room?')) {
+                                                            router.delete(destroy.url(room.id));
+                                                        }
+                                                    }}
+                                                    className="ml-3 border-2 border-red-400 bg-transparent px-3 py-1 text-xs text-red-400 transition-colors hover:bg-red-400 hover:text-gray-900"
+                                                >
+                                                    DELETE
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        if (confirm('Leave this room? You can rejoin with the code.')) {
+                                                            router.post(leaveRoom.url(room.id));
+                                                        }
+                                                    }}
+                                                    className="ml-3 border-2 border-orange-400 bg-transparent px-3 py-1 text-xs text-orange-400 transition-colors hover:bg-orange-400 hover:text-gray-900"
+                                                >
+                                                    LEAVE
+                                                </button>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Available rooms */}
                     <div
                         className="border-4 border-yellow-400 bg-gray-900/90 p-6"
@@ -353,19 +416,23 @@ export default function Lobby({ rooms, currentCostume }: Props) {
                         ) : (
                             <div className="space-y-2">
                                 {rooms.map((room) => (
-                                    <Link
+                                    <div
                                         key={room.id}
-                                        href={`/game/${room.code}`}
                                         className="flex items-center justify-between border-2 border-gray-700 bg-gray-800 p-3 transition-colors hover:border-yellow-400"
                                     >
-                                        <div>
-                                            <span className="text-white">{room.name}</span>
-                                            <span className="ml-2 text-sm text-gray-500">
-                                                by {room.host.name}
-                                            </span>
-                                        </div>
-                                        <span className="font-mono text-yellow-400">{room.code}</span>
-                                    </Link>
+                                        <Link
+                                            href={`/game/${room.code}`}
+                                            className="flex flex-1 items-center justify-between"
+                                        >
+                                            <div>
+                                                <span className="text-white">{room.name}</span>
+                                                <span className="ml-2 text-sm text-gray-500">
+                                                    by {room.host.name}
+                                                </span>
+                                            </div>
+                                            <span className="font-mono text-yellow-400">{room.code}</span>
+                                        </Link>
+                                    </div>
                                 ))}
                             </div>
                         )}

@@ -23,6 +23,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/practice/{level}', [GameRoomController::class, 'practice'])->name('practice');
     Route::get('/game/{code}', [GameRoomController::class, 'show'])->name('game.show');
     Route::post('/game/{room}/move', [GameRoomController::class, 'move'])->name('game.move');
+    Route::post('/game/{room}/leave', [GameRoomController::class, 'leave'])->name('game.leave');
+    Route::post('/game/{room}/leave-room', [GameRoomController::class, 'leaveRoom'])->name('game.leaveRoom');
+    Route::delete('/game/{room}', [GameRoomController::class, 'destroy'])->name('game.destroy');
 });
 
 require __DIR__.'/settings.php';

@@ -1,8 +1,9 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
 
 import MultiplayerGameCanvas from '@/components/multiplayer-game-canvas';
 import { type SharedData } from '@/types';
+import { destroy, leave } from '@/actions/App/Http/Controllers/GameRoomController';
 
 // Ensure touchControls exists
 if (typeof window !== 'undefined') {
@@ -115,12 +116,26 @@ export default function Game({ room, isHost, playerCostume, startLevel = 0 }: Pr
             >
                 {/* Header */}
                 <div className="relative z-10 mb-2 flex items-center justify-between">
-                    <Link
-                        href="/lobby"
-                        className="border-2 border-yellow-400 bg-transparent px-4 py-1 text-sm text-yellow-400 transition-colors hover:bg-yellow-400 hover:text-gray-900"
-                    >
-                        ← LOBBY
-                    </Link>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => router.post(leave.url(room.id))}
+                            className="border-2 border-yellow-400 bg-transparent px-4 py-1 text-sm text-yellow-400 transition-colors hover:bg-yellow-400 hover:text-gray-900"
+                        >
+                            ← LEAVE
+                        </button>
+                        {isHost && (
+                            <button
+                                onClick={() => {
+                                    if (confirm('Are you sure you want to delete this room?')) {
+                                        router.delete(destroy.url(room.id));
+                                    }
+                                }}
+                                className="border-2 border-red-400 bg-transparent px-4 py-1 text-sm text-red-400 transition-colors hover:bg-red-400 hover:text-gray-900"
+                            >
+                                DELETE
+                            </button>
+                        )}
+                    </div>
 
                     <div className="flex items-center gap-4">
                         <h1

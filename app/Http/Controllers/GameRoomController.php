@@ -14,15 +14,27 @@ class GameRoomController extends Controller
 {
     public function index(): Response
     {
+        $user = auth()->user();
+
+        // Public rooms (waiting, not owned by current user)
         $rooms = GameRoom::where('status', 'waiting')
+            ->where('host_id', '!=', $user->id)
             ->with('host:id,name')
             ->latest()
             ->take(10)
             ->get();
 
+        // Rooms the user has joined (including ones they own)
+        $myRooms = $user->joinedRooms()
+            ->where('status', 'waiting')
+            ->with('host:id,name')
+            ->latest()
+            ->get();
+
         return Inertia::render('lobby', [
             'rooms' => $rooms,
-            'currentCostume' => auth()->user()->costume ?? 0,
+            'myRooms' => $myRooms,
+            'currentCostume' => $user->costume ?? 0,
         ]);
     }
 
@@ -43,10 +55,15 @@ class GameRoomController extends Controller
             'name' => ['required', 'string', 'max:50'],
         ]);
 
+        $user = $request->user();
+
         $room = GameRoom::create([
             'name' => $validated['name'],
-            'host_id' => $request->user()->id,
+            'host_id' => $user->id,
         ]);
+
+        // Add host as a player in the room
+        $room->players()->attach($user->id);
 
         return redirect()->route('game.show', $room->code);
     }
@@ -59,13 +76,19 @@ class GameRoomController extends Controller
             return redirect()->route('lobby')->with('error', 'Room not found');
         }
 
+        // Add user to this room if not already a member
+        $user = auth()->user();
+        if (! $room->players()->where('user_id', $user->id)->exists()) {
+            $room->players()->attach($user->id);
+        }
+
         // Get starting level from query param (default 0)
         $startLevel = (int) $request->query('level', 0);
 
         return Inertia::render('game', [
             'room' => $room->only(['id', 'code', 'name', 'status', 'max_players']),
             'isHost' => $room->host_id === auth()->id(),
-            'playerCostume' => auth()->user()->costume ?? 0,
+            'playerCostume' => $user->costume ?? 0,
             'startLevel' => $startLevel,
         ]);
     }
@@ -120,5 +143,39 @@ class GameRoomController extends Controller
         ))->toOthers();
 
         return response()->json(['status' => 'ok']);
+    }
+
+    public function leave(GameRoom $room): RedirectResponse
+    {
+        // Simply redirect to lobby - the WebSocket will handle the leaving event
+        // This doesn't remove the user from the room permanently
+        return redirect()->route('lobby');
+    }
+
+    public function leaveRoom(GameRoom $room): RedirectResponse
+    {
+        $user = auth()->user();
+
+        // Can't leave a room you own - you must delete it
+        if ($room->host_id === $user->id) {
+            return redirect()->route('lobby')->with('error', 'You own this room. Delete it instead.');
+        }
+
+        // Remove user from the room
+        $room->players()->detach($user->id);
+
+        return redirect()->route('lobby');
+    }
+
+    public function destroy(GameRoom $room): RedirectResponse
+    {
+        // Only the host can delete the room
+        if ($room->host_id !== auth()->id()) {
+            return redirect()->route('lobby')->with('error', 'Only the host can delete this room');
+        }
+
+        $room->delete();
+
+        return redirect()->route('lobby');
     }
 }
