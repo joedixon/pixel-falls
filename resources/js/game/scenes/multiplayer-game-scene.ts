@@ -244,6 +244,7 @@ export class MultiplayerGameScene extends Phaser.Scene {
     private lastSendTime = 0;
     private lastHeartbeatTime = 0;
     private heartbeatInterval = 2000; // Send heartbeat every 2 seconds
+    private echoChannel: ReturnType<typeof window.Echo.join> | null = null;
 
     constructor(
         private roomId: number,
@@ -2601,12 +2602,38 @@ export class MultiplayerGameScene extends Phaser.Scene {
 
 
     private setupWebSocketListeners(): void {
-        const channel = window.Echo.join(`game.${this.roomId}`);
+        // Small delay to ensure game.tsx has joined the channel first
+        setTimeout(() => {
+            if (!window.Echo) {
+                console.error('Echo not available');
+                return;
+            }
+            
+            this.echoChannel = window.Echo.join(`game.${this.roomId}`);
 
-        channel.listen('.player.moved', (data: PlayerMovedData) => {
+            // Use stopListening first to remove any stale listeners from previous scene instances
+            this.echoChannel.stopListening('.player.moved');
+            
+            this.echoChannel.listen('.player.moved', (data: PlayerMovedData) => {
             if (data.playerId === this.playerId) return;
             this.handleRemotePlayerMove(data);
         });
+        }, 100);
+    }
+    
+    shutdown(): void {
+        // Clean up WebSocket listener when scene is destroyed
+        if (this.echoChannel) {
+            this.echoChannel.stopListening('.player.moved');
+            this.echoChannel = null;
+        }
+        
+        // Clean up remote players
+        this.remotePlayers.forEach((remote) => {
+            if (remote.sprite?.active) remote.sprite.destroy();
+            if (remote.nameText?.active) remote.nameText.destroy();
+        });
+        this.remotePlayers.clear();
     }
 
     private handleRemotePlayerMove(data: PlayerMovedData): void {

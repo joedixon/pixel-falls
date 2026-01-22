@@ -156,10 +156,10 @@ export default function Lobby({ rooms, myRooms, currentCostume }: Props) {
                                             key={costume.id}
                                             onClick={() => handleCostumeChange(costume.id)}
                                             disabled={savingCostume}
-                                            className={`flex flex-col items-center border-2 p-2 transition-all ${
+                                            className={`flex flex-col items-center border-2 p-1 transition-all ${
                                                 selectedCostume === costume.id
                                                     ? 'border-yellow-400 bg-yellow-400/20'
-                                                    : 'border-gray-600 bg-gray-800 hover:border-gray-400'
+                                                    : 'border-gray-600 bg-gray-500 hover:border-gray-400'
                                             }`}
                                         >
                                             <CharacterPreview costumeId={costume.id} size={40} />

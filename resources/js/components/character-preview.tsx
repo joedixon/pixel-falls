@@ -19,7 +19,9 @@ export default function CharacterPreview({ costumeId, size = 64, className = '' 
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
-        ctx.clearRect(0, 0, 16, 16);
+        // Fill entire canvas with grey background
+        ctx.fillStyle = '#6b7280';
+        ctx.fillRect(0, 0, 16, 16);
 
         const pixel = (x: number, y: number, color: string) => {
             ctx.fillStyle = color;
@@ -61,31 +63,17 @@ export default function CharacterPreview({ costumeId, size = 64, className = '' 
     }, [costume]);
 
     return (
-        <div
+        <canvas
+            ref={canvasRef}
+            width={16}
+            height={16}
             className={className}
             style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
                 width: size,
                 height: size,
-                background: 'radial-gradient(circle, #6b7280 0%, #4b5563 100%)',
-                borderRadius: '4px',
-                paddingTop: size * 0.08, // Shift content down slightly since characters are drawn top-heavy
+                imageRendering: 'pixelated',
             }}
-        >
-            <canvas
-                ref={canvasRef}
-                width={16}
-                height={16}
-                style={{
-                    display: 'block',
-                    width: size * 0.8,
-                    height: size * 0.8,
-                    imageRendering: 'pixelated',
-                }}
-            />
-        </div>
+        />
     );
 }
 
