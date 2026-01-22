@@ -12,4 +12,10 @@ export const LEVEL_INFO = [
         description: 'Run the Yellow Brick Road through Shiz University!',
         theme: 'wicked',
     },
+    {
+        id: 2,
+        name: 'Level 3: Escape the Volcano!',
+        description: 'Climb to safety before the rising lava catches you!',
+        theme: 'volcano',
+    },
 ];

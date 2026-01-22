@@ -117,10 +117,20 @@ interface LevelConfig {
     // Spawn position
     spawnX: number;
     spawnY: number;
-    // Finish line X position
+    // Finish line X position (for horizontal levels)
     finishX: number;
+    // Finish line Y position (for vertical levels - optional)
+    finishY?: number;
     // Theme (affects background color)
-    theme?: 'default' | 'wicked';
+    theme?: 'default' | 'wicked' | 'volcano';
+    // Rising lava configuration
+    risingLava?: {
+        startY: number;      // Y position where lava starts
+        speed: number;       // Pixels per second the lava rises
+        startDelay: number;  // Milliseconds before lava starts rising
+    };
+    // World height override for vertical levels
+    worldHeight?: number;
 }
 
 // Level definitions
@@ -214,6 +224,44 @@ const LEVELS: LevelConfig[] = [
         spawnY: WORLD_HEIGHT - 40,
         finishX: WORLD_WIDTH - 30,
     },
+    {
+        name: 'Level 3: Escape the Volcano!',
+        theme: 'volcano',
+        worldHeight: 600, // Taller world for vertical climbing
+        platforms: [
+            // Starting area - wide safe platform
+            [80, 570, 12],  // Starting platform (192 pixels wide)
+            
+            // Simple staircase - all jumps ~35px vertical, platforms overlap horizontally
+            [70, 535, 6],
+            [130, 500, 6],
+            [70, 465, 6],
+            [130, 430, 6],
+            [70, 395, 6],
+            [130, 360, 6],
+            [70, 325, 6],
+            [130, 290, 6],
+            [70, 255, 6],
+            [130, 220, 6],
+            [70, 185, 6],
+            [130, 150, 6],
+            [70, 115, 6],
+            [130, 80, 6],
+            
+            // Final platform - safety! (offset to the side so no overlap)
+            [50, 40, 8],   // Wide victory platform at top (to the left)
+        ],
+        hazards: [], // No static hazards - the rising lava is the hazard!
+        spawnX: 160,
+        spawnY: 550,
+        finishX: 114, // Center of victory platform (50 + 64)
+        finishY: 40,  // Y of victory platform (flag will sit on it)
+        risingLava: {
+            startY: 590,     // Start just below the starting platform
+            speed: 12,       // Pixels per second - gives ~45 seconds to escape
+            startDelay: 3000, // 3 seconds before lava starts rising
+        },
+    },
 ];
 
 export class MultiplayerGameScene extends Phaser.Scene {
@@ -245,6 +293,14 @@ export class MultiplayerGameScene extends Phaser.Scene {
     private lastHeartbeatTime = 0;
     private heartbeatInterval = 2000; // Send heartbeat every 2 seconds
     private echoChannel: ReturnType<typeof window.Echo.join> | null = null;
+    
+    // Rising lava properties
+    private risingLavaGraphics?: Phaser.GameObjects.Graphics;
+    private risingLavaY = 0;
+    private risingLavaConfig?: { startY: number; speed: number; startDelay: number };
+    private risingLavaStarted = false;
+    private risingLavaStartTime = 0;
+    private currentWorldHeight = WORLD_HEIGHT;
 
     constructor(
         private roomId: number,
@@ -1805,6 +1861,8 @@ export class MultiplayerGameScene extends Phaser.Scene {
 
         if (theme === 'wicked') {
             this.createWickedBackground();
+        } else if (theme === 'volcano') {
+            this.createVolcanoBackground();
         } else {
             this.createDefaultBackground();
         }
@@ -1848,6 +1906,93 @@ export class MultiplayerGameScene extends Phaser.Scene {
         }
         skyDecor.setScrollFactor(0.1, 1);
         this.backgroundElements.push(skyDecor);
+    }
+
+    private createVolcanoBackground(): void {
+        const bgHeight = this.currentWorldHeight;
+        const bgWidth = WORLD_WIDTH;
+        
+        // Dark volcanic sky with red glow
+        const sky = this.add.graphics();
+        sky.fillStyle(0x1a0a0a); // Very dark red-tinted black
+        sky.fillRect(0, 0, bgWidth, bgHeight);
+        this.backgroundElements.push(sky);
+        
+        // Red gradient glow from below (lava glow)
+        const lavaGlow = this.add.graphics();
+        for (let y = 0; y < bgHeight; y += 20) {
+            const alpha = Math.max(0, (y / bgHeight) * 0.4); // More glow at bottom
+            lavaGlow.fillStyle(0xff3300, alpha);
+            lavaGlow.fillRect(0, y, bgWidth, 20);
+        }
+        this.backgroundElements.push(lavaGlow);
+        
+        // Rocky walls on both sides
+        const leftWall = this.add.graphics();
+        leftWall.fillStyle(0x3d2817); // Dark brown rock
+        leftWall.fillRect(0, 0, 20, bgHeight);
+        // Rock texture
+        leftWall.fillStyle(0x2a1a0f);
+        for (let y = 0; y < bgHeight; y += 30) {
+            leftWall.fillRect(0, y, 15 + Math.random() * 10, 15);
+        }
+        this.backgroundElements.push(leftWall);
+        
+        const rightWall = this.add.graphics();
+        rightWall.fillStyle(0x3d2817);
+        rightWall.fillRect(bgWidth - 20, 0, 20, bgHeight);
+        rightWall.fillStyle(0x2a1a0f);
+        for (let y = 0; y < bgHeight; y += 30) {
+            rightWall.fillRect(bgWidth - 25 + Math.random() * 10, y, 20, 15);
+        }
+        this.backgroundElements.push(rightWall);
+        
+        // Floating embers/sparks
+        const embers = this.add.graphics();
+        embers.fillStyle(0xff6600, 0.8);
+        for (let i = 0; i < 40; i++) {
+            const x = 30 + Math.random() * (bgWidth - 60);
+            const y = Math.random() * bgHeight;
+            embers.fillRect(x, y, 2, 2);
+        }
+        // Yellow hot sparks
+        embers.fillStyle(0xffcc00, 0.9);
+        for (let i = 0; i < 20; i++) {
+            const x = 30 + Math.random() * (bgWidth - 60);
+            const y = Math.random() * bgHeight;
+            embers.fillRect(x, y, 1, 1);
+        }
+        this.backgroundElements.push(embers);
+        
+        // Distant lava pools/cracks in walls
+        const lavaCracks = this.add.graphics();
+        lavaCracks.fillStyle(0xff4400, 0.6);
+        // Left wall cracks
+        for (let y = 100; y < bgHeight; y += 120) {
+            lavaCracks.fillRect(5, y, 8, 20 + Math.random() * 30);
+        }
+        // Right wall cracks
+        for (let y = 150; y < bgHeight; y += 100) {
+            lavaCracks.fillRect(bgWidth - 13, y, 8, 25 + Math.random() * 25);
+        }
+        this.backgroundElements.push(lavaCracks);
+        
+        // "ESCAPE!" text at top as goal indicator
+        const escapeText = this.add.text(
+            bgWidth / 2,
+            30,
+            '↑ ESCAPE! ↑',
+            {
+                fontSize: '10px',
+                color: '#22c55e',
+                backgroundColor: '#00000080',
+                padding: { x: 4, y: 2 },
+            }
+        );
+        escapeText.setOrigin(0.5);
+        escapeText.setScrollFactor(0);
+        escapeText.setDepth(50);
+        this.backgroundElements.push(escapeText);
     }
 
     private createWickedBackground(): void {
@@ -2214,13 +2359,111 @@ export class MultiplayerGameScene extends Phaser.Scene {
         this.backgroundElements.push(sky);
     }
     
-    private createFinishLine(): void {
-        // Place finish line near the end of the level
-        const finishY = WORLD_HEIGHT - 16 - 24; // Position above ground (48px sprite, anchored at center)
+    private createFinishLine(platformY?: number): void {
+        // Place finish line on platform surface
+        // platformY is the Y coordinate of the platform the flag should sit on
+        // Flag sprite is 48px tall, anchored at center, so we position center at (platformTop - 24)
+        // Platform tiles are 16px tall, centered, so top surface is at platformY - 8
+        let finishY: number;
+        if (platformY !== undefined) {
+            // Vertical level - place flag on specified platform
+            const platformTop = platformY - 8; // Top surface of 16px platform tile
+            finishY = platformTop - 24; // Center of 48px flag sprite
+        } else {
+            // Horizontal level - place above ground (ground at currentWorldHeight - 8)
+            const groundTop = this.currentWorldHeight - 16;
+            finishY = groundTop - 24;
+        }
 
         this.finishLine = this.physics.add.sprite(this.finishLineX, finishY, 'finishLine');
         this.finishLine.setImmovable(true);
         this.finishLine.body.setAllowGravity(false);
+    }
+    
+    private updateRisingLavaGraphics(): void {
+        if (!this.risingLavaGraphics) return;
+        
+        this.risingLavaGraphics.clear();
+        
+        const lavaHeight = this.currentWorldHeight - this.risingLavaY;
+        
+        // Main lava body - gradient from orange at top to dark red at bottom
+        this.risingLavaGraphics.fillStyle(0xdc2626); // Red base
+        this.risingLavaGraphics.fillRect(0, this.risingLavaY, WORLD_WIDTH, lavaHeight);
+        
+        // Orange layer at top
+        this.risingLavaGraphics.fillStyle(0xf97316);
+        this.risingLavaGraphics.fillRect(0, this.risingLavaY, WORLD_WIDTH, 8);
+        
+        // Bright yellow wavy surface
+        this.risingLavaGraphics.fillStyle(0xfbbf24);
+        for (let x = 0; x < WORLD_WIDTH; x += 8) {
+            const waveOffset = Math.sin((x + this.time.now * 0.005) * 0.2) * 3;
+            this.risingLavaGraphics.fillRect(x, this.risingLavaY + waveOffset, 6, 4);
+        }
+        
+        // Hot spots (random bubbles)
+        this.risingLavaGraphics.fillStyle(0xfef3c7, 0.8);
+        for (let i = 0; i < 10; i++) {
+            const bx = (Math.sin(this.time.now * 0.001 + i * 1.5) + 1) * (WORLD_WIDTH / 2 - 20) + 20;
+            const by = this.risingLavaY + 10 + (i % 3) * 8;
+            if (by < this.currentWorldHeight) {
+                this.risingLavaGraphics.fillRect(bx, by, 3, 3);
+            }
+        }
+    }
+    
+    private updateRisingLava(delta: number): void {
+        if (!this.risingLavaConfig || this.hasFinished) return;
+        
+        const elapsed = this.time.now - this.risingLavaStartTime;
+        
+        // Check if we should start rising
+        if (!this.risingLavaStarted) {
+            if (elapsed >= this.risingLavaConfig.startDelay) {
+                this.risingLavaStarted = true;
+                // Show warning text
+                const warningText = this.add.text(
+                    GAME_WIDTH / 2,
+                    GAME_HEIGHT / 2,
+                    '⚠️ LAVA RISING! ⚠️',
+                    {
+                        fontSize: '14px',
+                        color: '#ef4444',
+                        backgroundColor: '#1f2937',
+                        padding: { x: 8, y: 4 },
+                    }
+                );
+                warningText.setOrigin(0.5);
+                warningText.setScrollFactor(0);
+                warningText.setDepth(100);
+                
+                // Fade out and destroy after 2 seconds
+                this.tweens.add({
+                    targets: warningText,
+                    alpha: 0,
+                    duration: 500,
+                    delay: 1500,
+                    onComplete: () => warningText.destroy(),
+                });
+                
+                // Screen shake for effect
+                this.cameras.main.shake(500, 0.01);
+            }
+            return;
+        }
+        
+        // Rise the lava
+        const riseAmount = (this.risingLavaConfig.speed * delta) / 1000;
+        this.risingLavaY -= riseAmount;
+        
+        // Update the graphics
+        this.updateRisingLavaGraphics();
+        
+        // Check if player is caught by lava
+        if (this.player && this.player.y + 8 >= this.risingLavaY) {
+            this.handleLavaDeath();
+        }
     }
 
     private handleFinishLine(): void {
@@ -2291,6 +2534,14 @@ export class MultiplayerGameScene extends Phaser.Scene {
         this.player.setPosition(this.spawnX, this.spawnY);
         this.player.setVelocity(0, 0);
         
+        // Reset rising lava if present
+        if (this.risingLavaConfig) {
+            this.risingLavaY = this.risingLavaConfig.startY;
+            this.risingLavaStarted = false;
+            this.risingLavaStartTime = this.time.now;
+            this.updateRisingLavaGraphics();
+        }
+        
         // Brief invulnerability visual feedback
         this.tweens.add({
             targets: this.player,
@@ -2339,6 +2590,20 @@ export class MultiplayerGameScene extends Phaser.Scene {
         if (this.finishLine) {
             this.finishLine.destroy();
         }
+        
+        // Clear rising lava if present
+        if (this.risingLavaGraphics) {
+            this.risingLavaGraphics.destroy();
+            this.risingLavaGraphics = undefined;
+        }
+        this.risingLavaStarted = false;
+        this.risingLavaConfig = undefined;
+
+        // Set world height (custom for vertical levels)
+        this.currentWorldHeight = level.worldHeight || WORLD_HEIGHT;
+        
+        // Update physics world bounds for this level
+        this.physics.world.setBounds(0, 0, WORLD_WIDTH, this.currentWorldHeight);
 
         // Update background for the level's theme
         this.createBackground(level.theme || 'default');
@@ -2349,7 +2614,7 @@ export class MultiplayerGameScene extends Phaser.Scene {
         this.finishLineX = level.finishX;
 
         const tileSize = 16;
-        const groundY = WORLD_HEIGHT - tileSize / 2;
+        const groundY = this.currentWorldHeight - tileSize / 2;
 
         // Helper to get hazard type at position
         const getHazardAt = (x: number): string | null => {
@@ -2373,19 +2638,21 @@ export class MultiplayerGameScene extends Phaser.Scene {
             return 'ground'; // Default ground type
         };
 
-        // Create ground or hazards based on position
+        // Create ground or hazards based on position (skip for rising lava levels)
+        if (!level.risingLava) {
         for (let x = tileSize / 2; x < WORLD_WIDTH; x += tileSize) {
-            const hazard = getHazardAt(x);
-            if (hazard) {
-                // Create hazard tile
-                const hazardTile = hazard === 'lava' ? 'lava' : 
-                                   hazard === 'void' ? 'void' : 
-                                   hazard === 'spikes' ? 'spikes' : 'lava';
-                this.lava.create(x, groundY, hazardTile);
-            } else {
-                // Create themed ground tile
-                const groundType = getGroundTypeAt(x);
-                this.ground.create(x, groundY, groundType);
+                const hazard = getHazardAt(x);
+                if (hazard) {
+                    // Create hazard tile
+                    const hazardTile = hazard === 'lava' ? 'lava' : 
+                                       hazard === 'void' ? 'void' : 
+                                       hazard === 'spikes' ? 'spikes' : 'lava';
+                    this.lava.create(x, groundY, hazardTile);
+                } else {
+                    // Create themed ground tile
+                    const groundType = getGroundTypeAt(x);
+                    this.ground.create(x, groundY, groundType);
+                }
             }
         }
 
@@ -2398,11 +2665,26 @@ export class MultiplayerGameScene extends Phaser.Scene {
             }
         }
 
-        // Create finish line
-        this.createFinishLine();
+        // Set up rising lava if configured
+        if (level.risingLava) {
+            this.risingLavaConfig = level.risingLava;
+            this.risingLavaY = level.risingLava.startY;
+            this.risingLavaStartTime = this.time.now;
+            
+            // Create rising lava graphics
+            this.risingLavaGraphics = this.add.graphics();
+            this.risingLavaGraphics.setDepth(90); // Above most things
+            this.updateRisingLavaGraphics();
+        }
+
+        // Create finish line (handle vertical finish)
+        this.createFinishLine(level.finishY);
 
         // Update level text
         this.updateLevelDisplay();
+        
+        // Update camera bounds for this level
+        this.cameras.main.setBounds(0, 0, WORLD_WIDTH, this.currentWorldHeight);
     }
 
     private updateLevelDisplay(): void {
@@ -2503,14 +2785,11 @@ export class MultiplayerGameScene extends Phaser.Scene {
     }
 
     create(): void {
-        // Set up larger world bounds for scrolling
-        this.physics.world.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
-        
         // Initialize physics groups
         this.ground = this.physics.add.staticGroup();
         this.lava = this.physics.add.staticGroup();
         
-        // Load the current level (this also creates the themed background)
+        // Load the current level (this sets world bounds, background, platforms, etc.)
         this.loadLevel(this.currentLevel);
 
         // Create local player with selected costume (spawn near start)
@@ -2584,8 +2863,8 @@ export class MultiplayerGameScene extends Phaser.Scene {
 
         this.player.anims.play(`idle_${this.playerCostume}`);
         
-        // Set up camera to follow player smoothly
-        this.cameras.main.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
+        // Set up camera to follow player smoothly (use currentWorldHeight for vertical levels)
+        this.cameras.main.setBounds(0, 0, WORLD_WIDTH, this.currentWorldHeight);
         this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
         this.cameras.main.setDeadzone(50, 30); // Small deadzone for smoother feel
 
@@ -2697,7 +2976,9 @@ export class MultiplayerGameScene extends Phaser.Scene {
         }
     }
 
-    update(time: number): void {
+    update(time: number, delta: number): void {
+        // Update rising lava if present
+        this.updateRisingLava(delta);
 
         const speed = 100;
 
@@ -2734,9 +3015,21 @@ export class MultiplayerGameScene extends Phaser.Scene {
             this.player.setVelocityY(-300);
         }
 
-        // Check if player passed the finish line (even if they jumped over it)
-        if (!this.hasFinished && this.player.x >= this.finishLineX) {
-            this.handleFinishLine();
+        // Check if player reached finish (horizontal or vertical levels)
+        const level = LEVELS[this.currentLevel];
+        if (!this.hasFinished) {
+            if (level?.finishY !== undefined) {
+                // Vertical level - check if player reached the victory platform
+                // Player must be at or above the platform Y and within X range of finish flag
+                const atCorrectHeight = this.player.y <= level.finishY + 10;
+                const nearFinishX = Math.abs(this.player.x - this.finishLineX) < 60;
+                if (atCorrectHeight && nearFinishX) {
+                    this.handleFinishLine();
+                }
+            } else if (this.player.x >= this.finishLineX) {
+                // Horizontal level - check if player passed finish line
+                this.handleFinishLine();
+            }
         }
 
         // Update name label position
