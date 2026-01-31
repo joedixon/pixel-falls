@@ -1881,6 +1881,7 @@ export class MultiplayerGameScene extends Phaser.Scene {
         farMountains.fillTriangle(580, bgHeight - 16, 700, 50, 820, bgHeight - 16);
         farMountains.fillTriangle(760, bgHeight - 16, 880, 40, 1000, bgHeight - 16);
         farMountains.setScrollFactor(0.2, 1);
+        farMountains.setDepth(-10);
         this.backgroundElements.push(farMountains);
         
         // Near hills
@@ -1894,6 +1895,7 @@ export class MultiplayerGameScene extends Phaser.Scene {
         nearHills.fillTriangle(700, bgHeight - 16, 820, 70, 940, bgHeight - 16);
         nearHills.fillTriangle(880, bgHeight - 16, 960, 85, 1040, bgHeight - 16);
         nearHills.setScrollFactor(0.5, 1);
+        nearHills.setDepth(-9);
         this.backgroundElements.push(nearHills);
         
         // Stars
@@ -1905,6 +1907,7 @@ export class MultiplayerGameScene extends Phaser.Scene {
             skyDecor.fillRect(x, y, 2, 2);
         }
         skyDecor.setScrollFactor(0.1, 1);
+        skyDecor.setDepth(-11);
         this.backgroundElements.push(skyDecor);
     }
 
@@ -1916,6 +1919,7 @@ export class MultiplayerGameScene extends Phaser.Scene {
         const sky = this.add.graphics();
         sky.fillStyle(0x1a0a0a); // Very dark red-tinted black
         sky.fillRect(0, 0, bgWidth, bgHeight);
+        sky.setDepth(-15);
         this.backgroundElements.push(sky);
         
         // Red gradient glow from below (lava glow)
@@ -1925,6 +1929,7 @@ export class MultiplayerGameScene extends Phaser.Scene {
             lavaGlow.fillStyle(0xff3300, alpha);
             lavaGlow.fillRect(0, y, bgWidth, 20);
         }
+        lavaGlow.setDepth(-14);
         this.backgroundElements.push(lavaGlow);
         
         // Rocky walls on both sides
@@ -1936,6 +1941,7 @@ export class MultiplayerGameScene extends Phaser.Scene {
         for (let y = 0; y < bgHeight; y += 30) {
             leftWall.fillRect(0, y, 15 + Math.random() * 10, 15);
         }
+        leftWall.setDepth(-13);
         this.backgroundElements.push(leftWall);
         
         const rightWall = this.add.graphics();
@@ -1945,6 +1951,7 @@ export class MultiplayerGameScene extends Phaser.Scene {
         for (let y = 0; y < bgHeight; y += 30) {
             rightWall.fillRect(bgWidth - 25 + Math.random() * 10, y, 20, 15);
         }
+        rightWall.setDepth(-13);
         this.backgroundElements.push(rightWall);
         
         // Floating embers/sparks
@@ -1962,6 +1969,7 @@ export class MultiplayerGameScene extends Phaser.Scene {
             const y = Math.random() * bgHeight;
             embers.fillRect(x, y, 1, 1);
         }
+        embers.setDepth(-12);
         this.backgroundElements.push(embers);
         
         // Distant lava pools/cracks in walls
@@ -1975,6 +1983,7 @@ export class MultiplayerGameScene extends Phaser.Scene {
         for (let y = 150; y < bgHeight; y += 100) {
             lavaCracks.fillRect(bgWidth - 13, y, 8, 25 + Math.random() * 25);
         }
+        lavaCracks.setDepth(-11);
         this.backgroundElements.push(lavaCracks);
         
         // "ESCAPE!" text at top as goal indicator
@@ -2347,6 +2356,7 @@ export class MultiplayerGameScene extends Phaser.Scene {
             }
             
             bg.setScrollFactor(1, 1); // Fixed to world coordinates - no parallax so backgrounds align with floors
+            bg.setDepth(-5); // Behind player but above sky
             this.backgroundElements.push(bg);
         }
         
